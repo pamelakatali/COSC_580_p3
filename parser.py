@@ -1,5 +1,5 @@
 import sqlglot
-from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple
+from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column
 from BTrees.OOBTree import OOBTree
 
 
@@ -49,16 +49,48 @@ def insert(res):
 	print('Column values:',vals)
 
 
-#SELECT FROM - if res.key == 'select'
-sql = 'SELECT name,people FROM trips WHERE name = people;'
+def where(res):
+	where_dict = {}
+	res = res.args['this']
+	where_dict['operation'] = res.key
 
-res = sqlglot.parse_one(sql)
-print(res)
-print('--------------------------------------')
+	where_dict['operand_l'] = res.args['this'].args['this'].args['this']
+	if res.args['expression'].find(Column) == None:
+		where_dict['operand_r'] = res.args['expression'].args['this']
+	else:
+		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+	return where_dict
+
+def join(res):
+	join_dict = {}
+	
+	res = res[0]
+	join_dict['type'] = res.args['kind']
+	join_dict['Table'] = res.find(Table).args['this'].args['this']
+
+	res = res.args['on']
+	join_dict['operation'] = res.key
+
+	join_dict['operand_l'] = res.args['this'].args['this'].args['this']
+	if res.args['expression'].find(Column) == None:
+		join_dict['operand_r'] = res.args['expression'].args['this']
+	else:
+		join_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+	
+	#print(join_dict)
+	return join_dict
 
 def select(res):
 	res = res.args
 	print(res.keys())
+
+	join_val = None
+	if res['joins'] != None:
+		join_val = join(res['joins'])
+	
+	where_val = None
+	if res['where'] != None:
+		where_val = where(res['where'])
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
@@ -78,13 +110,19 @@ def select(res):
 
 	print('Table name:',table_name)
 	print('Columns:',cols)
+	print('Where:',where_val)
+	print('Join:',join_val)
+	
+	
 
 if __name__ == '__main__':
-	#sql = 'CREATE TABLE trips (level VARCHAR(30), row_date DATE);'
-	sql = 'SELECT name,people FROM trips WHERE name = people;'
-	sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
-	VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-
+	sql = 'CREATE TABLE trips (level INT, row_date INT);'
+	#sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
+	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
+	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
+	#sql = 'SELECT OrderID, CustomerName, OrderDate \
+	#		FROM Orders \
+	#		INNER JOIN Customers ON CustomerID=OrderDate;'
 
 	res = sqlglot.parse_one(sql)
 	print(res)
