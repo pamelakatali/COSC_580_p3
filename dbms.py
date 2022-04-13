@@ -26,10 +26,13 @@ class DB:
 class Row:
   def __init__(self, values):
     self.values = values
+    print(values)
 
   def __len__(self):
     return len(self.values)
 
+  def __str__(self):
+    return self.values
 
   def __eq__(self, other):
     for i in range(len(self.values)):
@@ -54,8 +57,8 @@ class Table:
 
   def insert(self, new_row, row_cols):
     #insert into b-tree
-    ind = len(self.rows)
-    row_obj = Row(new_row)
+    ind = len(self.rows) #automatically generated ID
+    row_obj = Row(new_row) #create new row obj with row values
     self.rows.update({ind:row_obj})
 
     for i in range(len(new_row)):
@@ -72,9 +75,13 @@ class Table:
     print(list(self.col_btrees['name'].values()))
     print(list(self.col_btrees['grade'].keys()))
 
-#  def where(self, operator, op_l, op_r):
-#    if operator == 'eq':
-#      self.rows.iterkeys
+  def where(self, operator, op_l, op_r):
+    res = None
+    if operator == 'eq':
+      res = self.col_btrees[op_l].get(op_r)
+      #self.rows.iterkeys
+    print('WHERE:',res.__str__())
+    return res
 
 
   #def update(self, curr_row):

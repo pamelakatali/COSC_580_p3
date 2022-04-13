@@ -54,4 +54,4 @@ current_table.insert(['jack','11','4'], ['name','age','grade'])
 
 #WHERE
 #print(self.col_btrees)
-#current_table.where('eq','age','10')
+current_table.where('eq','age','10')
