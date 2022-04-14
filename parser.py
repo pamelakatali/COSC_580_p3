@@ -120,9 +120,9 @@ if __name__ == '__main__':
 	#sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
 	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
 	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-	#sql = 'SELECT OrderID, CustomerName, OrderDate \
-	#		FROM Orders \
-	#		INNER JOIN Customers ON CustomerID=OrderDate;'
+	sql = 'SELECT OrderID, CustomerName, OrderDate \
+			FROM Orders \
+			INNER JOIN Customers ON CustomerID=OrderDate;'
 
 	res = sqlglot.parse_one(sql)
 	print(res)

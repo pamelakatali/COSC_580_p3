@@ -1,7 +1,9 @@
 import sqlglot
 from BTrees.OOBTree import OOBTree
 
-from dbms import DBMS, DB, Table
+from dbms import DBMS
+from database import DB
+from table import Table
 
 '''
 sql = 'SELECT * FROM trips LIMIT 10;'
@@ -54,4 +56,14 @@ current_table.insert(['jack','11','4'], ['name','age','grade'])
 
 #WHERE
 #print(self.col_btrees)
-current_table.where('eq','age','10')
+current_table.where('eq','name','jack')
+
+#CREATE table -
+table_name = 'height_tbl'
+columns = ['name','height']
+col_types = ['int','int']
+height_tbl = current_db.create_table(table_name, columns, col_types)
+
+height_tbl.insert(['jack','80'], ['name','height'])
+height_tbl.insert(['jill','100'], ['name','height'])
+height_tbl.insert(['jack','95'], ['name','height'])
