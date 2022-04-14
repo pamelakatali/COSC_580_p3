@@ -206,3 +206,27 @@ class Table:
 
       return left_join_tbl      
 
+  def delete(self, cols, curr_vals, where_ids):
+    func = where_ids[0]
+    where_col = where_ids[1]
+    where_val = where_ids[2]
+    res = None
+
+    if func == 'eq':
+      res = self.col_btrees[where_col].get(where_val)
+    res_key = None
+    for ind in range(len(list(self.rows.values()))):
+      if res[0] == list(self.rows.values())[ind]:
+        res_key = ind
+    col_inds = []
+    for col in range(len(cols)):
+      col_inds.remove(list(self.col_btrees.keys()).index(cols[col]))
+    curr_row =[]
+    for i in range(len(res[0].get_vals())):
+      if i not in col_inds:
+        curr_row.remove(res[0].get_vals()[i])
+      else:
+        curr_row.remove(curr_vals[i])
+    row_obj = Row(curr_row)
+    del self.rows[res_key]
+    self.rows.delete({res_key:row_obj})
