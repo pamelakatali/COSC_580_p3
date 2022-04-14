@@ -3,7 +3,7 @@ from BTrees.OOBTree import OOBTree
 class Row:
   def __init__(self, values):
     self.values = values
-    print(values)
+    #print(values)
 
   def __len__(self):
     return len(self.values)

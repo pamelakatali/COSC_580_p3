@@ -54,6 +54,7 @@ def drop_table(res):
     table_name = res.find(Table).args['this'].args['this']
     print(table_name)
 
+
 #INSERT INTO - add row to table
 def insert(res):
 	table_name = res.find(Table).args['this'].args['this']
