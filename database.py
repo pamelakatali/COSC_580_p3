@@ -12,3 +12,8 @@ class DB:
     self.tables.update({table_name: new_table})
     print('Tables:',list(self.tables.keys()))
     return new_table
+
+  def drop_table(self,table_name):
+    print(list(self.tables))
+    del self.tables[table_name]
+    print(list(self.tables))

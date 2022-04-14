@@ -17,4 +17,7 @@ class Row:
         return False
     return True
 
+  def get_vals(self):
+    return self.values
+
 

@@ -16,6 +16,31 @@ class Table:
     #self.primary_key = primary_key
     #self.foreign_key = None
 
+  def update(self, cols, new_vals, where_ids):
+    func = where_ids[0]
+    where_col = where_ids[1]
+    where_val = where_ids[2]
+    res = None
+
+    if func == 'eq':
+      res = self.col_btrees[where_col].get(where_val)
+    res_key = None
+    for ind in range(len(list(self.rows.values()))):
+      if res[0] == list(self.rows.values())[ind]:
+        res_key = ind
+    col_inds = []
+    for col in range(len(cols)):
+      col_inds.append(list(self.col_btrees.keys()).index(cols[col]))
+    new_row =[]
+    for i in range(len(res[0].get_vals())):
+      if i not in col_inds:
+        new_row.append(res[0].get_vals()[i])
+      else:
+        new_row.append(new_vals[i])
+    row_obj = Row(new_row)
+    del self.rows[res_key]
+    self.rows.update({res_key:row_obj})
+
   def insert(self, new_row, row_cols):
     #insert into b-tree
     ind = len(self.rows) #automatically generated ID

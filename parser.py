@@ -25,7 +25,34 @@ def create(res):
 	print('Columns:',cols)
 	print('Column types:',col_typs)
 
+## UPDATE this if res.key == 'update'
+def update(res):
+    table_name = res.find(Table).args['this'].args['this']
 
+    expr = res.args['expressions']
+    cols = []
+    where = res.args['where']
+    func = where.args['this'].key
+    where_col = where.args['this'].args['this'].args['this'].args['this']
+    where_val = where.args['this'].args['expression'].args['this']
+    where_id = [func, where_col, where_val]
+    col_vals = []
+
+    if len(expr) == 1:
+        cols = [expr.find(Identifier).args['this']]
+    else:
+        for col in expr:
+            cols.append(col.find(Identifier).args['this'])
+            col_vals.append(col.find(Literal).args['this'])
+
+    print(where_id)
+    print(cols)
+    print(col_vals)
+
+#DROP Table
+def drop_table(res):
+    table_name = res.find(Table).args['this'].args['this']
+    print(table_name)
 
 #INSERT INTO - add row to table
 def insert(res):
@@ -134,3 +161,7 @@ if __name__ == '__main__':
 		insert(res)
 	elif res.key == 'select':
 		select(res)
+	elif res.key == 'update':
+		update(res)
+	elif res.key == 'drop':
+		drop_table(res)
