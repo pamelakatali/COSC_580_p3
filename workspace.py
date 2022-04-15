@@ -34,7 +34,7 @@ current_table = current_db.create_table(table_name, columns, col_types)
 #INSERT INTO
 current_table.insert()
 '''
-
+'''
 dbms = DBMS(); 
 #CREATE DATABASE covid_app;
 covid_app = dbms.create_db('school_app') 
@@ -101,3 +101,62 @@ join_tbl.print_table()
 print('FULL JOIN')
 join_tbl = school_tbl.join(height_tbl, 'eq', 'name','name', 'full')
 join_tbl.print_table()
+'''
+def rel_1():
+	rel_i_i_1000 = []
+	for i in range(1,1001):
+		tpl = [i,i]
+		rel_i_i_1000.append(tpl)
+	return rel_i_i_1000
+
+def rel_2():
+	rel_i_1_1000 = []
+	for i in range(1,1001):
+		tpl = [i,1]
+		rel_i_1_1000.append(tpl)
+	return rel_i_1_1000
+
+def rel_3():
+	rel_i_i_10000 = []
+	for i in range(1,10001):
+		tpl = [i,i]
+		rel_i_i_10000.append(tpl)
+	return rel_i_i_10000
+
+def rel_4():
+	rel_i_1_10000 = []
+	for i in range(1,10001):
+		tpl = [i,1]
+		rel_i_1_10000.append(tpl)
+	return rel_i_1_10000
+
+def bulk_load():
+	result = rel_3()
+	print(result)
+	print(len(result))
+
+
+#bulk_load()
+
+dbms = DBMS(); 
+#CREATE DATABASE covid_app;
+demo_app = dbms.create_db('demo_app') 
+
+#USE covid_app;
+current_db = demo_app
+
+#CREATE table -
+table_name = 'rel_i_i_10000'
+columns = ['col1','col2']
+col_types = ['int','int']
+rel_i_i_10000 = current_db.create_table(table_name, columns, col_types)
+
+print('INSERT')
+rel_i_i_10000_rows = rel_4()
+rel_i_i_10000.insert_bulk(rel_i_i_10000_rows,columns)
+rel_i_i_10000.print_table()
+
+
+
+
+
