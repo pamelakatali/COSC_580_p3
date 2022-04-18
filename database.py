@@ -17,4 +17,5 @@ class DB:
   def drop_table(self,table_name):
     print(list(self.tables))
     del self.tables[table_name]
+    #self.tables.__delitem__(table)
     print(list(self.tables))

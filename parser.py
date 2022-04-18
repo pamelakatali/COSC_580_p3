@@ -3,17 +3,18 @@ from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Tab
 from BTrees.OOBTree import OOBTree
 import pickle
 
-#print(res.__repr__)
+from table import Table as CustomTable
 
 
 
 #CREATE TABLE - if res.key == 'create'
 def create(res):
 	res = res
-	res_gen = res.find_all(ColumnDef)
 	table_name = res.find(Table).args['this'].args['this']
 	cols = []
-	col_typs = []
+	col_types = []
+
+	res_gen = res.args['this'].args['expressions']
 	for comm in res_gen:
 		idt = comm.find(Identifier)
 		col_name = idt.args['this']
@@ -21,10 +22,10 @@ def create(res):
 		col_type = dtyp.args['this']
 
 		cols.append(col_name)
-		col_typs.append(col_type)
+		col_types.append(col_type)
 	print('Table name:', table_name)
 	print('Columns:',cols)
-	print('Column types:',col_typs)
+	print('Column types:',col_types)
 
 	return table_name, cols, col_types
 
@@ -159,12 +160,16 @@ def parse(sql_str, current_db=None):
 	if res.key == 'create':
 		table_name, cols, col_types = create(res)
 		new_tbl = current_db.create_table(table_name, cols, col_types)
-		#return 'Current Tables:'+ current_db
+		return 'Tables:'+str(list(current_db.tables.keys()))
+
 	elif res.key == 'insert':
 		table_name, cols, col_vals = insert(res)
-		#school_tbl.insert(['jack','8','2'], ['name','age','grade'])
+		
 		ins_tbl = current_db.tables.get(table_name)
 		ins_tbl.insert(col_vals, cols)
+		ins_tbl.print_table()
+		return 'Inserted row into '+ ins_tbl.name
+
 	elif res.key == 'select':
 		table_name, cols, where_val, join_val = select(res)
 		sel_tbl = current_db.tables.get(table_name) #from
@@ -177,25 +182,37 @@ def parse(sql_str, current_db=None):
 			sel_tbl = new_tbl
 
 		#select - cols
-		new_name = sel_tbl.table_name+'_temp'
+		new_name = sel_tbl.name+'_temp'
 		new_col_types = []
 		for c in cols:
 			ind = sel_tbl.columns.index(c)
 			new_col_types.append(sel_tbl.col_types[ind])
 
-		new_tbl = Table(new_name, cols, new_col_types)
-
+		new_tbl = CustomTable(new_name, cols, new_col_types)
+		
+		col_inds = []
 		for c in cols:
-			new_tbl.col_btrees[c] = sel_tbl.col_btrees[c]
+			col_inds.append(sel_tbl.columns.index(c))
+		
 
 		first_col = cols[0]
-		first_col_keys = list(new_tbl.col_btrees[first_col].keys())
+		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
 		for k in first_col_keys:
-			res_rows = new_tbl.col_btrees[first_col].get(k)
-			new_tbl.insert_bulk(res_rows)
+			res_rows = sel_tbl.col_btrees[first_col].get(k)
+			print(res_rows)
+			for i in range(len(res_rows)):
+				new_row = []
+				for j in col_inds:
+					new_row.append(res_rows[i].values[j])
 
-		return new_tbl
-		
+				res_rows[i] = new_row
+
+			#print(new_tbl.columns)
+			new_tbl.insert_bulk(res_rows, new_tbl.columns)
+
+		new_tbl.print_table()
+		return 'Select done'
+
 	elif res.key == 'update':
 		update(res)
 	elif res.key == 'drop':
@@ -216,9 +233,13 @@ if __name__ == '__main__':
 	#sql = 'CREATE DATABASE mydatabase;'
 	#sql = 'USE mytbl;'
 
-	parse(sql)
+	#parse(sql)
 	#db = DBMS()
 	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
+
+	sql_str = 'CREATE TABLE school_directory (name VARCHAR, age INT, grade INT)'
+	res = sqlglot.parse_one(sql_str)
+	create(res)
 
 
 

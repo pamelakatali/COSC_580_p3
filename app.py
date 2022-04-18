@@ -32,7 +32,7 @@ def postME():
 
 @app.route('/foo')
 def index():
-    return request.base_url
+    return request.base_url 
 
 @app.route('/pass_val',methods=['POST'])
 def pass_val():
@@ -43,13 +43,14 @@ def pass_val():
         db = dbms.create_db(vals[2]) 
         res = 'Databases:'+str(list(dbms.databases))
     elif dbms.curr_db is None: #create table
-        
         vals = sql_str.split(' ')
         use_db = dbms.databases.get(vals[1]) 
         dbms.curr_db = use_db
         res = 'Using table: '+ use_db.name
     else:
-        res = parse(sql_str)
+        res = parse(sql_str, dbms.curr_db)
+        #res = 'hey'
+
 
 
     #print(sqlglot.parse_one(sql_data))
