@@ -1,9 +1,10 @@
 import sqlglot
 from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column
 from BTrees.OOBTree import OOBTree
-
+import pickle
 
 #print(res.__repr__)
+
 
 
 #CREATE TABLE - if res.key == 'create'
@@ -24,6 +25,9 @@ def create(res):
 	print('Table name:', table_name)
 	print('Columns:',cols)
 	print('Column types:',col_typs)
+
+	return table_name, cols, col_types
+
 
 ## UPDATE this if res.key == 'update'
 def update(res):
@@ -76,6 +80,8 @@ def insert(res):
 	print('Columns:',cols)
 	print('Column values:',vals)
 
+	return table_name, cols, vals
+
 
 def where(res):
 	where_dict = {}
@@ -113,7 +119,8 @@ def select(res):
 	print(res.keys())
 
 	join_val = None
-	if res['joins'] != None:
+	print(res['joins'])
+	if len(res['joins']) > 0:
 		join_val = join(res['joins'])
 	
 	where_val = None
@@ -140,29 +147,78 @@ def select(res):
 	print('Columns:',cols)
 	print('Where:',where_val)
 	print('Join:',join_val)
-	
-	
 
-if __name__ == '__main__':
-	sql = 'CREATE TABLE trips (level INT, row_date INT);'
-	#sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
-	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
-	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-	sql = 'SELECT OrderID, CustomerName, OrderDate \
-			FROM Orders \
-			INNER JOIN Customers ON CustomerID=OrderDate;'
-
-	res = sqlglot.parse_one(sql)
+	return table_name, cols, where_val, join_val
+	
+def parse(sql_str, current_db=None):
+	
+	res = sqlglot.parse_one(sql_str)
 	print(res)
 	print('--------------------------------------')
-
+	
 	if res.key == 'create':
-		create(res)
+		table_name, cols, col_types = create(res)
+		new_tbl = current_db.create_table(table_name, cols, col_types)
+		#return 'Current Tables:'+ current_db
 	elif res.key == 'insert':
-		insert(res)
+		table_name, cols, col_vals = insert(res)
+		#school_tbl.insert(['jack','8','2'], ['name','age','grade'])
+		ins_tbl = current_db.tables.get(table_name)
+		ins_tbl.insert(col_vals, cols)
 	elif res.key == 'select':
-		select(res)
+		table_name, cols, where_val, join_val = select(res)
+		sel_tbl = current_db.tables.get(table_name) #from
+		if where_val != None: #where
+			where_rows = sel_tbl.where(where_val['operation'],where_val['operand_l'],where_val['operand_r'])
+
+			new_name = sel_tbl.table_name+'_temp'
+			new_tbl = Table(new_name, sel_tbl.columns, sel_tbl.col_types)
+			new_tbl.insert_bulk(where_rows, sel_tbl.columns)
+			sel_tbl = new_tbl
+
+		#select - cols
+		new_name = sel_tbl.table_name+'_temp'
+		new_col_types = []
+		for c in cols:
+			ind = sel_tbl.columns.index(c)
+			new_col_types.append(sel_tbl.col_types[ind])
+
+		new_tbl = Table(new_name, cols, new_col_types)
+
+		for c in cols:
+			new_tbl.col_btrees[c] = sel_tbl.col_btrees[c]
+
+		first_col = cols[0]
+		first_col_keys = list(new_tbl.col_btrees[first_col].keys())
+		for k in first_col_keys:
+			res_rows = new_tbl.col_btrees[first_col].get(k)
+			new_tbl.insert_bulk(res_rows)
+
+		return new_tbl
+		
 	elif res.key == 'update':
 		update(res)
 	elif res.key == 'drop':
 		drop_table(res)
+	
+
+
+
+
+if __name__ == '__main__':
+	#sql = 'CREATE TABLE trips (level INT, row_date INT)'
+	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
+	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
+	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
+	#sql = 'SELECT OrderID, CustomerName, OrderDate \
+	#		FROM Orders \
+	#		INNER JOIN Customers ON CustomerID=OrderDate;'
+	#sql = 'CREATE DATABASE mydatabase;'
+	#sql = 'USE mytbl;'
+
+	parse(sql)
+	#db = DBMS()
+	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
+
+
+

@@ -34,7 +34,7 @@ current_table = current_db.create_table(table_name, columns, col_types)
 #INSERT INTO
 current_table.insert()
 '''
-'''
+
 dbms = DBMS(); 
 #CREATE DATABASE covid_app;
 covid_app = dbms.create_db('school_app') 
@@ -155,8 +155,11 @@ print('INSERT')
 rel_i_i_10000_rows = rel_4()
 rel_i_i_10000.insert_bulk(rel_i_i_10000_rows,columns)
 rel_i_i_10000.print_table()
+'''
 
-
-
+##########
+CREATE DATABASE school_app
+USE school_app
+CREATE TABLE school_directory (name VARCHAR, age INT)
 
 
