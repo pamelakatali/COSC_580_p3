@@ -82,6 +82,20 @@ class Table:
     del self.rows[res_key]
     self.rows.update({res_key:row_obj})
 
+  def delete(self, where_ids):
+    func = where_ids[0]
+    where_col = where_ids[1]
+    where_val = where_ids[2]
+    res = None
+
+    if func == 'eq':
+      res = self.col_btrees[where_col].get(where_val)
+    res_key = None
+    for ind in range(len(list(self.rows.values()))):
+      if res[0] == list(self.rows.values())[ind]:
+        res_key = ind
+    del self.rows[res_key]
+
   def left_outer_join(self, other_table, op, op_l, op_r):
     outer_tbl_name = self.name +'_outer_'+other_table.name
     outer_tbl_cols = self.columns + other_table.columns
