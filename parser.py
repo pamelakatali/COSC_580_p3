@@ -32,32 +32,30 @@ def create(res):
 
 ## UPDATE this if res.key == 'update'
 def update(res):
-    table_name = res.find(Table).args['this'].args['this']
+	table_name = res.find(Table).args['this'].args['this']
+	expr = res.args['expressions']
+	cols = []
+	wheres = res.args['where']
+	col_vals = []
+	where_val = None
+	if wheres != None:
+		where_val = where(wheres)
+	if len(expr) == 1:
 
-    expr = res.args['expressions']
-    cols = []
-    where = res.args['where']
-    func = where.args['this'].key
-    where_col = where.args['this'].args['this'].args['this'].args['this']
-    where_val = where.args['this'].args['expression'].args['this']
-    where_id = [func, where_col, where_val]
-    col_vals = []
-
-    if len(expr) == 1:
-        cols = [expr.find(Identifier).args['this']]
-    else:
-        for col in expr:
-            cols.append(col.find(Identifier).args['this'])
-            col_vals.append(col.find(Literal).args['this'])
-
-    print(where_id)
-    print(cols)
-    print(col_vals)
+		cols = [expr[0].find(Identifier).args['this']]
+		col_vals = [expr[0].find(Literal).args['this']]
+	else:
+		for col in expr:
+			cols.append(col.find(Identifier).args['this'])
+			col_vals.append(col.find(Literal).args['this'])
+	print(cols)
+	print(col_vals)
+	return table_name, cols, col_vals, where_val
 
 #DROP Table
 def drop_table(res):
-    table_name = res.find(Table).args['this'].args['this']
-    print(table_name)
+	table_name = res.find(Table).args['this'].args['this']
+	print(table_name)
 
 
 #INSERT INTO - add row to table
@@ -223,7 +221,11 @@ def parse(sql_str, current_db=None):
 		return 'Select done'
 
 	elif res.key == 'update':
-		update(res)
+		table_name, cols, col_vals, where_val = update(res)
+		sel_tbl = current_db.tables.get(table_name)  # from
+		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		sel_tbl.update(cols, col_vals, where_val)
+		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
 	
