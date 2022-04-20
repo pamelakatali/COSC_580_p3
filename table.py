@@ -247,3 +247,83 @@ class Table:
 
       return left_join_tbl      
 
+
+  def groupby(self, col):
+    group_table = Table(self.name+'_grpby_'+col,self.columns,self.col_types)
+    keys = list(self.col_btrees[col].keys())
+    rows = []
+    col_ind = self.columns.index(col)
+    if self.col_types[col_ind] == 'int':
+      keys.sort(key=int)
+    else:
+      keys.sort()
+    for k in keys:
+      rows.append(self.col_btrees[col].get(k))
+    for row in rows:
+      for i in row:
+        group_table.insert(i.values, self.columns)
+    return group_table
+
+
+
+  def max(self, col):
+    cur_col = self.col_btrees[col]
+    keys = list(cur_col.keys())
+    col_ind = self.columns.index(col)
+    if self.col_types[col_ind] == 'int':
+      new_keys = [int(x) for x in keys]
+    else:
+      new_keys = keys
+    max_key = max(new_keys)
+    max_ind = new_keys.index(max_key)
+    act_max = keys[max_ind]
+    row = self.col_btrees[col].get(act_max)
+    return row[0]
+
+
+  def min(self,col):
+    cur_col = self.col_btrees[col]
+    keys = list(cur_col.keys())
+    col_ind = self.columns.index(col)
+    if self.col_types[col_ind] == 'int':
+      new_keys = [int(x) for x in keys]
+    else:
+      new_keys = keys
+    min_key = min(new_keys)
+    min_ind = new_keys.index(min_key)
+    act_min = keys[min_ind]
+    row = self.col_btrees[col].get(act_min)
+    return row[0]
+
+  def avg(self, col):
+    col_ind = self.columns.index(col)
+    lst = []
+    for r in self.rows.values():
+      lst.append(r.get_vals()[col_ind])
+    if self.col_types[col_ind] == 'int':
+      new_list = [int(x) for x in lst]
+    else:
+      new_list = lst
+    return sum(new_list) / len(new_list)
+
+  def count(self, col):
+    col_ind = self.columns.index(col)
+    lst = []
+    for r in self.rows.values():
+      lst.append(r.get_vals()[col_ind])
+    if self.col_types[col_ind] == 'int':
+      new_list = [int(x) for x in lst]
+    else:
+      new_list = lst
+    return len(new_list)
+
+  def sum(self, col):
+    col_ind = self.columns.index(col)
+    lst = []
+    for r in self.rows.values():
+      lst.append(r.get_vals()[col_ind])
+    if self.col_types[col_ind] == 'int':
+      new_list = [int(x) for x in lst]
+    else:
+      new_list = lst
+    return sum(new_list)

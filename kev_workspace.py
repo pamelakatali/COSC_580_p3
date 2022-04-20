@@ -90,3 +90,50 @@ for i in range(10):
 print('-------')
 inner1000_10000 = rel_i_i_1000.join(rel_i_i_10000,'eq','col1','col1','left')
 inner1000_10000.print_table()
+
+
+dbms = DBMS();
+#CREATE DATABASE covid_app;
+covid_app = dbms.create_db('school_app')
+
+#USE covid_app;
+current_db = covid_app
+
+#CREATE table -
+table_name = 'school_directory'
+columns = ['name','age','grade']
+col_types = ['int','int','int']
+school_tbl = current_db.create_table(table_name, columns, col_types)
+
+#INSERT INTO
+print('INSERT')
+school_tbl.insert(['jack','8','2'], ['name','age','grade'])
+school_tbl.insert(['jill','10','3'], ['name','age','grade'])
+school_tbl.insert(['jack','11','4'], ['name','age','grade'])
+school_tbl.print_table()
+
+#WHERE
+print('WHERE')
+#print(self.col_btrees)
+school_tbl.where('eq','name','jack')
+
+#CREATE table -
+table_name = 'height_tbl'
+columns = ['name','height']
+col_types = ['str','int']
+height_tbl = current_db.create_table(table_name, columns, col_types)
+
+height_tbl.insert(['jack','80'], ['name','height'])
+height_tbl.insert(['jill','100'], ['name','height'])
+height_tbl.insert(['max','95'], ['name','height'])
+height_tbl.insert(['jack','95'], ['name','height'])
+
+# height_tbl.print_table()
+
+# height_tbl.delete(['eq','height','95'])
+height_tbl.print_table()
+print('00000')
+gr_tbl = height_tbl.groupby('height')
+gr_tbl.print_table()
+min_row = gr_tbl.min('height')
+print(min_row)
