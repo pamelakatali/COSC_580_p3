@@ -113,6 +113,12 @@ def join(res):
 	#print(join_dict)
 	return join_dict
 
+
+def groupby(res):
+	col_name = res.find(Identifier).args['this']
+	return col_name
+
+
 def select(res):
 	res = res.args
 	print(res.keys())
@@ -125,6 +131,9 @@ def select(res):
 	where_val = None
 	if res['where'] != None:
 		where_val = where(res['where'])
+
+	if res['group'] != None:
+		group_col = groupby(res['group'])
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
@@ -146,9 +155,11 @@ def select(res):
 	print('Columns:',cols)
 	print('Where:',where_val)
 	print('Join:',join_val)
+	print('Groupby:',group_col)
 
-	return table_name, cols, where_val, join_val
-	
+
+	return table_name, cols, where_val, join_val, group_col
+
 def parse(sql_str, current_db=None):
 	
 	res = sqlglot.parse_one(sql_str)
@@ -216,7 +227,8 @@ def parse(sql_str, current_db=None):
 
 			#print('After:',out_rows)
 			new_tbl.insert_bulk(out_rows, new_tbl.columns)
-
+		if group_col != None:
+			new_tbl = new_tbl.groupby(group_col)
 		new_tbl.print_table()
 		return 'Select done'
 

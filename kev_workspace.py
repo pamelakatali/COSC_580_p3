@@ -189,23 +189,137 @@ def test_update(sql_str):
 	sel_tbl.update(cols, col_vals, where_rows)
 
 
-sql_str = "UPDATE height_tbl SET name = 'john' WHERE height = '95';"
-sql_str_1 = "UPDATE height_tbl SET height = '120' WHERE name = 'jack';"
-print('original table')
-height_tbl.print_table()
-# print(sqlglot.parse_one(sql_str))
-print('')
-test_update(sql_str)
-print('updated table')
-height_tbl.print_table()
+def join(res):
+	join_dict = {}
 
-print('original table')
-height_tbl.print_table()
-# print(sqlglot.parse_one(sql_str))
-print('')
-test_update(sql_str_1)
-print('updated table')
-height_tbl.print_table()
+	res = res[0]
+	join_dict['type'] = res.args['kind']
+	join_dict['Table'] = res.find(Table).args['this'].args['this']
+
+	res = res.args['on']
+	join_dict['operation'] = res.key
+
+	join_dict['operand_l'] = res.args['this'].args['this'].args['this']
+	if res.args['expression'].find(Column) == None:
+		join_dict['operand_r'] = res.args['expression'].args['this']
+	else:
+		join_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+
+	#print(join_dict)
+	return join_dict
+
+def groupby(res):
+	col_name = res.find(Identifier).args['this']
+	return col_name
+
+def select(res):
+	res = res.args
+	print(res.keys())
+
+	join_val = None
+	print(res['joins'])
+	if len(res['joins']) > 0:
+		join_val = join(res['joins'])
+
+	where_val = None
+	if res['where'] != None:
+		where_val = where(res['where'])
+	if res['group'] != None:
+		group_col = groupby(res['group'])
+	table_name = res['from'].args['expressions'][0].args['this'].args['this']
+
+	expr = res['expressions']
+	cols = []
+	if len(expr) == 1:
+		expr = expr[0]
+		is_star = expr.find(Star)
+		if is_star is not None:
+			cols = ['star']
+		else:
+			cols = [expr.find(Identifier).args['this']]
+	else:
+
+		for col in expr:
+			cols.append(col.find(Identifier).args['this'])
+
+	print('Table name:',table_name)
+	print('Columns:',cols)
+	print('Where:',where_val)
+	print('Join:',join_val)
+	print('Groupby:',group_col)
+
+	return table_name, cols, where_val, join_val, group_col
+
+def test_select(sql_str):
+	res = sqlglot.parse_one(sql_str)
+	table_name, cols, where_val, join_val, group_col = select(res)
+	sel_tbl = current_db.tables.get(table_name)  # from
+	if where_val != None:  # where
+		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+
+		new_name = sel_tbl.table_name + '_temp'
+		new_tbl = Table(new_name, sel_tbl.columns, sel_tbl.col_types)
+		new_tbl.insert_bulk(where_rows, sel_tbl.columns)
+		sel_tbl = new_tbl
+
+	# select - cols
+	new_name = sel_tbl.name + '_temp'
+	new_col_types = []
+	for c in cols:
+		ind = sel_tbl.columns.index(c)
+		new_col_types.append(sel_tbl.col_types[ind])
+
+	new_tbl = CustomTable(new_name, cols, new_col_types)
+
+	col_inds = []
+	for c in cols:
+		col_inds.append(sel_tbl.columns.index(c))
+
+	first_col = cols[0]
+	first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
+	for k in first_col_keys:
+		res_rows = sel_tbl.col_btrees[first_col].get(k)
+		print(res_rows)
+		for i in range(len(res_rows)):
+			new_row = []
+			for j in col_inds:
+				new_row.append(res_rows[i].values[j])
+
+			res_rows[i] = new_row
+
+		# print(new_tbl.columns)
+		new_tbl.insert_bulk(res_rows, new_tbl.columns)
+	new_tbl.print_table()
+	if group_col != None:
+		new_tbl = new_tbl.groupby(group_col)
+	print('hahahah')
+	new_tbl.print_table()
+	return 'Select done'
+
+
+# sql_str = "UPDATE height_tbl SET name = 'john' WHERE height = '95';"
+# sql_str_1 = "UPDATE height_tbl SET height = '120' WHERE name = 'jack';"
+# print('original table')
+# height_tbl.print_table()
+# # print(sqlglot.parse_one(sql_str))
+# print('')
+# test_update(sql_str)
+# print('updated table')
+# height_tbl.print_table()
+#
+# print('original table')
+# height_tbl.print_table()
+# # print(sqlglot.parse_one(sql_str))
+# print('')
+# test_update(sql_str_1)
+# print('updated table')
+# height_tbl.print_table()
+print('1111111')
+school_tbl.print_table()
+print('old table')
+sql_str = "SELECT name, grade, age FROM school_directory GROUP BY grade;"
+print(test_select(sql_str))
+
 # print('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
 # print(height_tbl.name)
 # res = sqlglot.parse_one(sql_str)
