@@ -165,9 +165,8 @@ INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)
 INSERT INTO school_directory (name, age, grade) VALUES ('jill', 10, 3)
 INSERT INTO school_directory (name, age, grade) VALUES ('jack', 11, 4)
 SELECT name, age FROM school_directory
-
-
-
 SELECT name, grade FROM school_directory
 SELECT name, age FROM school_directory WHERE age = 10
+
+SELECT name, age FROM school_directory WHERE age >= 10
 SELECT * FROM school_directory

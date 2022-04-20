@@ -4,7 +4,7 @@ from BTrees.OOBTree import OOBTree
 import pickle
 
 from table import Table as CustomTable
-
+import copy
 
 
 #CREATE TABLE - if res.key == 'create'
@@ -173,42 +173,51 @@ def parse(sql_str, current_db=None):
 	elif res.key == 'select':
 		table_name, cols, where_val, join_val = select(res)
 		sel_tbl = current_db.tables.get(table_name) #from
+		#sel_tbl.select(cols, where_val, join_val)
+
 		if where_val != None: #where
 			where_rows = sel_tbl.where(where_val['operation'],where_val['operand_l'],where_val['operand_r'])
-
-			new_name = sel_tbl.table_name+'_temp'
-			new_tbl = Table(new_name, sel_tbl.columns, sel_tbl.col_types)
-			new_tbl.insert_bulk(where_rows, sel_tbl.columns)
+			new_name = sel_tbl.name+'_temp'
+			new_tbl = CustomTable(new_name, sel_tbl.columns, sel_tbl.col_types)
+			
+			new_where_rows = []
+			for r in where_rows:
+				new_where_rows.append(copy.deepcopy(r.values))
+			new_tbl.insert_bulk(new_where_rows, sel_tbl.columns)
 			sel_tbl = new_tbl
 
 		#select - cols
 		new_name = sel_tbl.name+'_temp'
 		new_col_types = []
+		col_inds = []
 		for c in cols:
 			ind = sel_tbl.columns.index(c)
-			new_col_types.append(sel_tbl.col_types[ind])
+			new_col_types.append(sel_tbl.col_types[ind]) #get [select]column types
+
+			col_inds.append(sel_tbl.columns.index(c)) #get [select]column indices
 
 		new_tbl = CustomTable(new_name, cols, new_col_types)
 		
-		col_inds = []
-		for c in cols:
-			col_inds.append(sel_tbl.columns.index(c))
+		#col_inds = []
+		#for c in cols:
+		#	col_inds.append(sel_tbl.columns.index(c))
 		
-
+		print('Tables:',list(current_db.tables.keys()))
 		first_col = cols[0]
 		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
 		for k in first_col_keys:
 			res_rows = sel_tbl.col_btrees[first_col].get(k)
+			out_rows = []
 			print(res_rows)
 			for i in range(len(res_rows)):
 				new_row = []
-				for j in col_inds:
-					new_row.append(res_rows[i].values[j])
+				for j in col_inds: #fill in row columns
+					new_row.append(copy.deepcopy(res_rows[i].values[j]))
 
-				res_rows[i] = new_row
+				out_rows.append(new_row)
 
-			#print(new_tbl.columns)
-			new_tbl.insert_bulk(res_rows, new_tbl.columns)
+			#print('After:',out_rows)
+			new_tbl.insert_bulk(out_rows, new_tbl.columns)
 
 		new_tbl.print_table()
 		return 'Select done'
@@ -237,9 +246,9 @@ if __name__ == '__main__':
 	#db = DBMS()
 	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
-	sql_str = 'CREATE TABLE school_directory (name VARCHAR, age INT, grade INT)'
+	sql_str = 'SELECT name, age FROM school_directory WHERE age >= 10'
 	res = sqlglot.parse_one(sql_str)
-	create(res)
+	select(res)
 
 
 

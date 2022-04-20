@@ -22,6 +22,12 @@ class Table:
   def print_table(self):
     for r in self.rows.values():
       print(r)
+  '''
+  def select(self, cols, where_val, join_val):
+    if where_val != None: 
+      where_rows = self.where(where_val['operation'],where_val['operand_l'],where_val['operand_r'])
+  '''
+
 
   def combine_tables(self, other_table):
     for k in other_table.rows.keys():
@@ -51,11 +57,25 @@ class Table:
     res = None
     if operator == 'eq':
       res = self.col_btrees[op_l].get(op_r)
+    elif operator == 'gt':
+      res = self.col_btrees[op_l].values(min=op_r,excludemin=True)
+    elif operator == 'lt':
+      res = self.col_btrees[op_l].values(max=op_r,excludemax=True)
+    elif operator == 'gte':
+      res = self.col_btrees[op_l].values(min=op_r,excludemin=False)
+    elif operator == 'lte':
+      res = self.col_btrees[op_l].values(max=op_r,excludemax=False)
     
-    #print('WHERE')  
-    #for r in res:
-    #  print(r)
-    return res
+    #print('WHERE') 
+    new_res = [] 
+    for r in res:
+      if isinstance(r, list):
+        for val in r:
+          new_res.append(val)
+      else:
+        new_res.append(r)
+    #print(r)
+    return new_res
 
   def update(self, cols, new_vals, where_ids):
     func = where_ids[0]
