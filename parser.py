@@ -60,6 +60,7 @@ def drop_table(res):
 
 #INSERT INTO - add row to table
 def insert(res):
+	#print(res)
 	table_name = res.find(Table).args['this'].args['this']
 	#print(res.args.keys())
 	print(res.args['expression'].find(Tuple).args['expressions'])#.args['expressions'])
@@ -72,6 +73,7 @@ def insert(res):
 	for col in cols_gen:
 		cols.append(col.args['this'])
 
+	
 	for val in vals_gen:
 		vals.append(val.args['this'])
 
@@ -113,11 +115,9 @@ def join(res):
 	#print(join_dict)
 	return join_dict
 
-
 def groupby(res):
 	col_name = res.find(Identifier).args['this']
 	return col_name
-
 
 def select(res):
 	res = res.args
@@ -159,7 +159,7 @@ def select(res):
 
 
 	return table_name, cols, where_val, join_val, group_col
-
+	
 def parse(sql_str, current_db=None):
 	
 	res = sqlglot.parse_one(sql_str)
@@ -227,6 +227,7 @@ def parse(sql_str, current_db=None):
 
 			#print('After:',out_rows)
 			new_tbl.insert_bulk(out_rows, new_tbl.columns)
+
 		if group_col != None:
 			new_tbl = new_tbl.groupby(group_col)
 		new_tbl.print_table()
@@ -260,9 +261,9 @@ if __name__ == '__main__':
 	#db = DBMS()
 	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
-	sql_str = 'SELECT name, age FROM school_directory WHERE age >= 10'
+	sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
 	res = sqlglot.parse_one(sql_str)
-	select(res)
+	insert(res)
 
 
 

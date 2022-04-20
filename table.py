@@ -2,6 +2,15 @@ from BTrees.OOBTree import OOBTree
 
 from row import Row
 import numpy as np
+from sqlglot.expressions import DataType
+
+def convert_datatype(val, datatype):
+  if datatype == DataType.Type.INT:
+    return int(val)
+  if datatype == DataType.Type.DOUBLE:
+    return float(val)
+  else:
+    return val
 
 class Table:
   def __init__(self, name, columns, col_types, primary_key=None):
@@ -22,12 +31,6 @@ class Table:
   def print_table(self):
     for r in self.rows.values():
       print(r)
-  '''
-  def select(self, cols, where_val, join_val):
-    if where_val != None: 
-      where_rows = self.where(where_val['operation'],where_val['operand_l'],where_val['operand_r'])
-  '''
-
 
   def combine_tables(self, other_table):
     for k in other_table.rows.keys():
@@ -38,9 +41,17 @@ class Table:
     for row in new_rows:
       self.insert(row, row_cols)
 
+
   def insert(self, new_row, row_cols):
     #insert into b-tree
     ind = len(self.rows) #automatically generated ID
+
+    #convert data to types
+    count = 0
+    for i in range(len(new_row)):
+      new_row[i] = convert_datatype(new_row[i], self.col_types[count])
+      count += 1
+
     row_obj = Row(new_row) #create new row obj with row values
     self.rows.update({ind:row_obj})
 
@@ -54,6 +65,10 @@ class Table:
         self.col_btrees[curr_col].update({new_row[i]:output})
 
   def where(self, operator, op_l, op_r):
+
+    ind = self.columns.index(op_l)
+    op_r = convert_datatype(op_r, self.col_types[ind])
+
     res = None
     if operator == 'eq':
       res = self.col_btrees[op_l].get(op_r)

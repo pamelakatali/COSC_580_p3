@@ -156,17 +156,19 @@ rel_i_i_10000_rows = rel_4()
 rel_i_i_10000.insert_bulk(rel_i_i_10000_rows,columns)
 rel_i_i_10000.print_table()
 '''
-
+[<Type.VARCHAR: 'VARCHAR'>, <Type.INT: 'INT'>, <Type.INT: 'INT'>]
 ##########
 CREATE DATABASE school_app
 USE school_app
-CREATE TABLE school_directory (name VARCHAR, age INT, grade INT)
-INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)
-INSERT INTO school_directory (name, age, grade) VALUES ('jill', 10, 3)
-INSERT INTO school_directory (name, age, grade) VALUES ('jack', 11, 4)
+CREATE TABLE school_directory (name VARCHAR, age INT, grade INT, gpa DOUBLE)
+INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2, 3.3)
+INSERT INTO school_directory (name, age, grade) VALUES ('jill', 10, 3, 3.5)
+INSERT INTO school_directory (name, age, grade) VALUES ('jack', 11, 4, 3.7)
 SELECT name, age FROM school_directory
 SELECT name, grade FROM school_directory
 SELECT name, age FROM school_directory WHERE age = 10
-
 SELECT name, age FROM school_directory WHERE age >= 10
+SELECT name, age FROM school_directory WHERE gpa >= 3.4
+
+
 SELECT * FROM school_directory
