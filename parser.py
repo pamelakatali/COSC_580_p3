@@ -180,7 +180,7 @@ def parse(sql_str, current_db=None):
 		return 'Inserted row into '+ ins_tbl.name
 
 	elif res.key == 'select':
-		table_name, cols, where_val, join_val = select(res)
+		table_name, cols, where_val, join_val, group_col = select(res)
 		sel_tbl = current_db.tables.get(table_name) #from
 		#sel_tbl.select(cols, where_val, join_val)
 
