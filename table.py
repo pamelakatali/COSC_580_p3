@@ -266,22 +266,52 @@ class Table:
 
       return left_join_tbl      
 
-
   def groupby(self, col):
     group_table = Table(self.name+'_grpby_'+col,self.columns,self.col_types)
     keys = list(self.col_btrees[col].keys())
     rows = []
     col_ind = self.columns.index(col)
     if self.col_types[col_ind] == 'int':
-      keys.sort(key=int)
+        keys.sort(key=int)
     else:
-      keys.sort()
+        keys.sort()
+    for k in keys:
+      rows.append(self.col_btrees[col].get(k))
+    grp_tables = []
+    for row in rows:
+      for i in row:
+        print(i.values)
+    for row in range(len(rows)):
+      print(keys[row])
+      temp_table = Table(col +' '+ keys[row],self.columns,self.col_types)
+      for j in rows[row]:
+        temp_table.insert(j.values, self.columns)
+      grp_tables.append(temp_table)
+      # grp_tables.append(Table(rows[i]))
+    return grp_tables
+
+
+  def orderby(self, col, desc=None):
+    order_table = Table(self.name+'_ordby_'+col,self.columns,self.col_types)
+    keys = list(self.col_btrees[col].keys())
+    rows = []
+    col_ind = self.columns.index(col)
+    if self.col_types[col_ind] == 'int':
+      if desc == True:
+        keys.sort(key=int, reverse=True)
+      else:
+        keys.sort(key=int)
+    else:
+      if desc == True:
+        keys.sort(reverse=True)
+      else:
+        keys.sort()
     for k in keys:
       rows.append(self.col_btrees[col].get(k))
     for row in rows:
       for i in row:
-        group_table.insert(i.values, self.columns)
-    return group_table
+        order_table.insert(i.values, self.columns)
+    return order_table
 
 
 

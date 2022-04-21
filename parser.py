@@ -1,5 +1,6 @@
 import sqlglot
-from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column,Min, Max, Avg,Sum, Count, Ordered, Group, Order
+from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, \
+	Column, Min, Max, Avg, Sum, Count, Ordered, Group, Order
 from BTrees.OOBTree import OOBTree
 import pickle
 
@@ -7,7 +8,7 @@ from table import Table as CustomTable
 import copy
 
 
-#CREATE TABLE - if res.key == 'create'
+# CREATE TABLE - if res.key == 'create'
 def create(res):
 	res = res
 	table_name = res.find(Table).args['this'].args['this']
@@ -24,8 +25,8 @@ def create(res):
 		cols.append(col_name)
 		col_types.append(col_type)
 	print('Table name:', table_name)
-	print('Columns:',cols)
-	print('Column types:',col_types)
+	print('Columns:', cols)
+	print('Column types:', col_types)
 
 	return table_name, cols, col_types
 
@@ -52,18 +53,19 @@ def update(res):
 	print(col_vals)
 	return table_name, cols, col_vals, where_val
 
-#DROP Table
+
+# DROP Table
 def drop_table(res):
 	table_name = res.find(Table).args['this'].args['this']
 	print(table_name)
 
 
-#INSERT INTO - add row to table
+# INSERT INTO - add row to table
 def insert(res):
-	#print(res)
+	# print(res)
 	table_name = res.find(Table).args['this'].args['this']
-	#print(res.args.keys())
-	print(res.args['expression'].find(Tuple).args['expressions'])#.args['expressions'])
+	# print(res.args.keys())
+	print(res.args['expression'].find(Tuple).args['expressions'])  # .args['expressions'])
 
 	cols_gen = res.args['this'].args['expressions']
 	vals_gen = res.args['expression'].find(Tuple).args['expressions']
@@ -73,13 +75,12 @@ def insert(res):
 	for col in cols_gen:
 		cols.append(col.args['this'])
 
-	
 	for val in vals_gen:
 		vals.append(val.args['this'])
 
 	print('Table name:', table_name)
-	print('Columns:',cols)
-	print('Column values:',vals)
+	print('Columns:', cols)
+	print('Column values:', vals)
 
 	return table_name, cols, vals
 
@@ -96,9 +97,10 @@ def where(res):
 		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
 	return where_dict
 
+
 def join(res):
 	join_dict = {}
-	
+
 	res = res[0]
 	join_dict['type'] = res.args['kind']
 	join_dict['Table'] = res.find(Table).args['this'].args['this']
@@ -111,18 +113,21 @@ def join(res):
 		join_dict['operand_r'] = res.args['expression'].args['this']
 	else:
 		join_dict['operand_r'] = res.args['expression'].args['this'].args['this']
-	
-	#print(join_dict)
+
+	# print(join_dict)
 	return join_dict
+
 
 def orderby(res):
 	col_name = res.find(Identifier).args['this']
 	key = res.find(Ordered).args['desc']
 	return [col_name, key]
 
+
 def groupby(res):
-	col_name = res.find(Identifier).args['this']
-	return col_name
+	group_col = res.find(Identifier).args['this']
+	return group_col
+
 
 def find_pre(res):
 	pre = None
@@ -149,7 +154,7 @@ def select(res):
 	print(res['joins'])
 	if len(res['joins']) > 0:
 		join_val = join(res['joins'])
-	
+
 	where_val = None
 	if res['where'] != None:
 		where_val = where(res['where'])
@@ -180,34 +185,34 @@ def select(res):
 			pres.append(find_pre(col))
 			cols.append(col.find(Identifier).args['this'])
 
-	print('Table name:',table_name)
+	print('Table name:', table_name)
 	print('Prefixes:', pres)
-	print('Columns:',cols)
-	print('Where:',where_val)
-	print('Join:',join_val)
-	print('Order_by:',order_col)
-
+	print('Columns:', cols)
+	print('Where:', where_val)
+	print('Join:', join_val)
+	print('Order_by:', order_col)
+	print('Group_by:', group_col)
 
 	return table_name, pres, cols, where_val, join_val, order_col, group_col
-	
+
+
 def parse(sql_str, current_db=None):
-	
 	res = sqlglot.parse_one(sql_str)
 	print(res)
 	print('--------------------------------------')
-	
+
 	if res.key == 'create':
 		table_name, cols, col_types = create(res)
 		new_tbl = current_db.create_table(table_name, cols, col_types)
-		return 'Tables:'+str(list(current_db.tables.keys()))
+		return 'Tables:' + str(list(current_db.tables.keys()))
 
 	elif res.key == 'insert':
 		table_name, cols, col_vals = insert(res)
-		
+
 		ins_tbl = current_db.tables.get(table_name)
 		ins_tbl.insert(col_vals, cols)
 		ins_tbl.print_table()
-		return 'Inserted row into '+ ins_tbl.name
+		return 'Inserted row into ' + ins_tbl.name
 
 	elif res.key == 'select':
 		table_name, pres, cols, where_val, join_val, order_col, group_col = select(res)
@@ -338,32 +343,29 @@ def parse(sql_str, current_db=None):
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
-	
-
-
 
 
 if __name__ == '__main__':
-	#sql = 'CREATE TABLE trips (level INT, row_date INT)'
+	# sql = 'CREATE TABLE trips (level INT, row_date INT)'
 	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
-	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
-	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-	#sql = 'SELECT OrderID, CustomerName, OrderDate \
+	# sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
+	# VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
+	# sql = 'SELECT OrderID, CustomerName, OrderDate \
 	#		FROM Orders \
 	#		INNER JOIN Customers ON CustomerID=OrderDate;'
-	#sql = 'CREATE DATABASE mydatabase;'
-	#sql = 'USE mytbl;'
+	# sql = 'CREATE DATABASE mydatabase;'
+	# sql = 'USE mytbl;'
 
-	#parse(sql)
-	#db = DBMS()
-	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
+	# parse(sql)
+	# db = DBMS()
+	# pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
 	# sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
 	# res = sqlglot.parse_one(sql_str)
 	# insert(res)
 
-	sql_str2= 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
+	sql_str2 = 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
 	res = sqlglot.parse_one(sql_str2)
 	select(res)
-	# print(res.args['order'].find(Ordered).args['desc'])
-	# print(cols)
+# print(res.args['order'].find(Ordered).args['desc'])
+# print(cols)
