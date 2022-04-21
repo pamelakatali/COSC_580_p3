@@ -215,27 +215,27 @@ def pre_sel(cur_table, pres, cols, col_types, col_inds):
 		if pre == 'Min':
 			if first_pre_ind == None:
 				first_pre_ind = pre_ind
-			new_cols.append('MIN(' + cols[pre_ind] + ')')
+			new_cols.append(cols[pre_ind])
 			res_row = cur_table.min(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
 			temp_rows.append(cur_table.min(cols[pre_ind]))
 			new_new_col_types.append(col_types[pre_ind])
 		elif pre == 'Max':
 			if first_pre_ind == None:
 				first_pre_ind = pre_ind
-			new_cols.append('MAX(' + cols[pre_ind] + ')')
+			new_cols.append(cols[pre_ind])
 			res_row = cur_table.max(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
 			new_new_col_types.append(col_types[pre_ind])
 			temp_rows.append(cur_table.max(cols[pre_ind]))
 		elif pre == 'Sum':
-			new_cols.append('SUM(' + cols[pre_ind] + ')')
+			new_cols.append(cols[pre_ind])
 			res_row = cur_table.sum(cols[pre_ind])
 			new_new_col_types.append(col_types[pre_ind])
 		elif pre == 'Count':
-			new_cols.append('COUNT(' + cols[pre_ind] + ')')
+			new_cols.append(cols[pre_ind])
 			res_row = cur_table.count(cols[pre_ind])
 			new_new_col_types.append(col_types[pre_ind])
 		elif pre == 'Avg':
-			new_cols.append('AVG(' + cols[pre_ind] + ')')
+			new_cols.append(cols[pre_ind])
 			res_row = cur_table.avg(cols[pre_ind])[pre_ind]
 			new_new_col_types.append(col_types[pre_ind])
 		res_rows.append(res_row)
