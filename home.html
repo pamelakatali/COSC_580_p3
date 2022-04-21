@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!--
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -17,4 +18,53 @@
 
     <script src="script.js"></script>
   </body>
+</html>
+-->
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://unpkg.com/jquery.terminal/js/jquery.terminal.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/jquery.terminal/css/jquery.terminal.min.css"/>
+</head>
+<body>
+  <script >
+  jQuery(function($, undefined) {
+      $('body').terminal(function(sql_str) {
+          var terminal = this;
+
+          $.ajax(
+              {
+                  type:'POST',
+                  contentType:'application/json;charset-utf-08',
+                  dataType:'json',
+                  url:'http://127.0.0.1:5000/pass_val?value='+sql_str ,
+                  success:function (data) {
+                      var reply = data.reply;
+                        console.log(data)
+                      if (reply == "success")
+                      {
+                          terminal.echo(data.result)
+                          return;
+                      }
+                      else
+                          {
+                          alert("some error ocured in session agent")
+                          }
+
+                  }
+              }
+          );
+
+
+
+      }, {
+          greetings: 'DBMS Interface',
+          name: 'js_demo',
+          height: 1000,
+          width: 1400,
+          prompt: 'sql> '
+      });
+  });
+  </script src="script.js">
+</body>
 </html>
