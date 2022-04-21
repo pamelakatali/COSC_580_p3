@@ -1,5 +1,5 @@
 import sqlglot
-from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column,Min, Max, Avg,Sum, Count
+from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column,Min, Max, Avg,Sum, Count, Ordered, Group, Order
 from BTrees.OOBTree import OOBTree
 import pickle
 
@@ -117,6 +117,11 @@ def join(res):
 
 def orderby(res):
 	col_name = res.find(Identifier).args['this']
+	key = res.find(Ordered).args['desc']
+	return [col_name, key]
+
+def groupby(res):
+	col_name = res.find(Identifier).args['this']
 	return col_name
 
 def find_pre(res):
@@ -153,6 +158,10 @@ def select(res):
 	if res['order'] != None:
 		order_col = orderby(res['order'])
 
+	group_col = None
+	if res['group'] != None:
+		group_col = groupby(res['group'])
+
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
 	expr = res['expressions']
@@ -179,7 +188,7 @@ def select(res):
 	print('Order_by:',order_col)
 
 
-	return table_name, pres, cols, where_val, join_val, order_col
+	return table_name, pres, cols, where_val, join_val, order_col, group_col
 	
 def parse(sql_str, current_db=None):
 	
@@ -201,7 +210,7 @@ def parse(sql_str, current_db=None):
 		return 'Inserted row into '+ ins_tbl.name
 
 	elif res.key == 'select':
-		table_name, pres, cols, where_val, join_val, order_col = select(res)
+		table_name, pres, cols, where_val, join_val, order_col, group_col = select(res)
 		sel_tbl = current_db.tables.get(table_name)  # from
 		# sel_tbl.select(cols, where_val, join_val)
 
@@ -232,8 +241,11 @@ def parse(sql_str, current_db=None):
 
 		print('Tables:', list(current_db.tables.keys()))
 		first_col = cols[0]
+		print('pres are ')
+		print(pres)
 		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
-		if 'Min' or 'Max' or 'Sum' or 'Count' or 'Avg' in pres:
+
+		if 'Min' in pres or 'Max' in pres or 'Sum' in pres or 'Count' in pres or 'Avg' in pres:
 			pre_inds = []
 			non_pre = []
 			first_pre_ind = None
@@ -262,7 +274,7 @@ def parse(sql_str, current_db=None):
 					new_cols.append('MAX(' + cols[pre_ind] + ')')
 					res_row = sel_tbl.max(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
 					new_new_col_types.append(new_col_types[pre_ind])
-					temp_rows.append(sel_tbl.min(cols[pre_ind]))
+					temp_rows.append(sel_tbl.max(cols[pre_ind]))
 				elif pre == 'Sum':
 					new_cols.append('SUM(' + cols[pre_ind] + ')')
 					res_row = sel_tbl.sum(cols[pre_ind])
@@ -284,13 +296,14 @@ def parse(sql_str, current_db=None):
 			if first_pre_ind != None:
 				first_row = temp_rows[0]
 			row_vals = []
+
 			for i in range(len(new_cols)):
 				if i not in pre_inds:
+					col_name = new_cols[i]
+					cur_ind = sel_tbl.columns.index(col_name)
 					if first_row != None:
-						row_vals.append(first_row[i])
+						row_vals.append(first_row.get_vals()[cur_ind])
 					else:
-						col_name = new_cols[i]
-						cur_ind = sel_tbl.columns.index(col_name)
 						row_vals.append(sel_tbl.rows[0].get_vals()[cur_ind])
 				else:
 					row_vals.append(res_rows[i])
@@ -311,7 +324,7 @@ def parse(sql_str, current_db=None):
 				new_tbl.insert_bulk(out_rows, new_tbl.columns)
 
 		if order_col != None:
-			new_tbl = new_tbl.orderby(order_col)
+			new_tbl = new_tbl.orderby(order_col[0], order_col[1])
 		print('THIS IS THE NEW TABLE')
 		print(new_tbl.columns)
 		new_tbl.print_table()
@@ -349,9 +362,8 @@ if __name__ == '__main__':
 	# res = sqlglot.parse_one(sql_str)
 	# insert(res)
 
-	sql_str2= 'SELECT MIN(age), name FROM school_directory'
+	sql_str2= 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
 	res = sqlglot.parse_one(sql_str2)
-	# print(cols)
 	select(res)
-
-
+	# print(res.args['order'].find(Ordered).args['desc'])
+	# print(cols)
