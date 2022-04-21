@@ -74,6 +74,7 @@ class Table:
       res = self.col_btrees[op_l].get(op_r)
     elif operator == 'gt':
       res = self.col_btrees[op_l].values(min=op_r,excludemin=True)
+      res2 = self.col_btrees[op_l].keys(min=op_r,excludemin=True)
     elif operator == 'lt':
       res = self.col_btrees[op_l].values(max=op_r,excludemax=True)
     elif operator == 'gte':
@@ -82,6 +83,8 @@ class Table:
       res = self.col_btrees[op_l].values(max=op_r,excludemax=False)
     
     #print('WHERE') 
+    #print(res2)
+    #exit()
     new_res = [] 
     for r in res:
       if isinstance(r, list):
@@ -94,8 +97,12 @@ class Table:
 
   def update(self, cols, new_vals, where_rows):
     #
+    print(cols)
+    print(new_vals)
+    print(where_rows)
     res = where_rows
     res_key = []
+    print(self.rows.values()[2])
     for ind in range(len(list(self.rows.values()))):
       for i in range(len(res)):
         if res[i] == list(self.rows.values())[ind]:
@@ -121,22 +128,50 @@ class Table:
       del self.rows[res_key[i]]
       self.rows.update({res_key[i]: row_objs[i]})
 
-  def delete(self, where_ids):
-    func = where_ids[0]
-    where_col = where_ids[1]
-    where_val = where_ids[2]
-    res = None
+  def delete(self, where_entries):
+    # for i in range(len(where_ids)):
+    #   print(where_ids[i])
+    # exit()
+    # func = where_ids[0]
+    # where_col = where_ids[1]
+    # where_val = where_ids[2]
+    # res = None
+    # if func == 'eq':
+    #   res = self.col_btrees[where_col].get(where_val)
+    # res_key = []
+    # for ind in range(len(list(self.rows.values()))):
+    #   for i in range(len(res)):
+    #     if res[i] == list(self.rows.values())[ind]:
+    #       res_key.append(ind)
+    # for keys in res_key:
+    #   print(keys)
+    #   del self.rows[keys]
+    
+    del_ids = []
+    for i in range(len(where_entries)):
+      for j in range(len(list(self.rows.values()))):
+        if where_entries[i] == list(self.rows.values())[j]:
+          del_ids.append(j)
 
-    if func == 'eq':
-      res = self.col_btrees[where_col].get(where_val)
-    res_key = []
-    for ind in range(len(list(self.rows.values()))):
-      for i in range(len(res)):
-        if res[i] == list(self.rows.values())[ind]:
-          res_key.append(ind)
-    for keys in res_key:
-      print(keys)
-      del self.rows[keys]
+    
+    for j in del_ids:
+      print(j)
+      del (self.rows[j])
+
+      ## Needs work
+    # col0 = self.columns[0]
+    # print(col0)
+
+    
+    # for j in del_ids:
+    #   #print(self.rows[j].keys())
+    #   #print(list(self.rows.values())[j])
+    #   print(self.col_btrees[col0][11])
+    #   self.col_btrees[col0].remove(list(self.rows.values()[j]))
+    #   exit()
+    #   break
+
+      
 
   def left_outer_join(self, other_table, op, op_l, op_r):
     outer_tbl_name = self.name +'_outer_'+other_table.name

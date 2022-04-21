@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from parser import parse
+from parser2 import parse
 
 import sqlglot
 import pickle

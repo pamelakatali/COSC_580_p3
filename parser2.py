@@ -5,7 +5,6 @@ import pickle
 
 from table import Table as CustomTable
 import copy
-from database import DB
 
 
 #CREATE TABLE - if res.key == 'create'
@@ -49,11 +48,8 @@ def update(res):
 		for col in expr:
 			cols.append(col.find(Identifier).args['this'])
 			col_vals.append(col.find(Literal).args['this'])
-	print(table_name)
 	print(cols)
 	print(col_vals)
-	print(where_val)
-	#exit()
 	return table_name, cols, col_vals, where_val
 
 #DROP Table
@@ -138,8 +134,6 @@ def select(res):
 
 	if res['group'] != None:
 		group_col = groupby(res['group'])
-	else:
-		group_col = None
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
@@ -157,33 +151,19 @@ def select(res):
 		for col in expr:
 			cols.append(col.find(Identifier).args['this'])
 
-	# print('Table name:',table_name)
-	# print('Columns:',cols)
-	# print('Where:',where_val)
-	# print('Join:',join_val)
-	# print('Groupby:',group_col)
+	print('Table name:',table_name)
+	print('Columns:',cols)
+	print('Where:',where_val)
+	print('Join:',join_val)
+	#print('Groupby:',group_col)
 
 
 	return table_name, cols, where_val, join_val, group_col
-
-def delete(res):
-	table_name = res.find(Table).args['this'].args['this']
-	cols = []
-	wheres = res.args['where']
-	col_vals = []
-	where_val = None
-	if wheres != None:
-		where_val = where(wheres)
-
-	# print(table_name)
-	# print(where_val)
-	# exit()
-	return table_name, where_val
-
+	
 def parse(sql_str, current_db=None):
 	
 	res = sqlglot.parse_one(sql_str)
-	#print(res)
+	print(res)
 	print('--------------------------------------')
 	
 	if res.key == 'create':
@@ -261,18 +241,14 @@ def parse(sql_str, current_db=None):
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
+	
 
-	elif res.key == 'delete':
-		table_name, where_val = delete(res)
-		sel_tbl = current_db.tables.get(table_name)
-		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
-		sel_tbl.delete(where_rows)
-		
 
 
 
 if __name__ == '__main__':
-	#sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
+	#sql = 'CREATE TABLE trips (level INT, row_date INT)'
+	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
 	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
 	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
 	#sql = 'SELECT OrderID, CustomerName, OrderDate \
@@ -281,50 +257,13 @@ if __name__ == '__main__':
 	#sql = 'CREATE DATABASE mydatabase;'
 	#sql = 'USE mytbl;'
 
-	db = DB('db1')
+	#parse(sql)
+	#db = DBMS()
+	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
-	print('___________Create___________')
-	sql = 'CREATE TABLE emp (id INT, salary INT)'
-	parse(sql, db)
-
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (11, 100)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (22, 200)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (33, 300)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (44, 400)'
-	parse(sql, db)
-
-
-	print('___________SELECT___________')
-	sql = 'SELECT id, salary from emp'
-	parse(sql, db)
-
-	# print('___________UPDATE___________')
-	# sql = 'UPDATE emp SET salary = 999 WHERE id == 2'
-	# parse(sql, db)
-
-
-	print('___________DELETE___________')
-	sql = 'DELETE FROM emp where id > 2'
-	parse(sql, db)
-
-
-	print('___________SELECT___________')
-	sql = 'SELECT id, salary from emp'
-	parse(sql, db)
-
-
-#	pickle.dump(, open( 'dbms.pkl', 'wb' ))
-
-#	sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
-#	res = sqlglot.parse_one(sql_str)
-#	insert(res)
+	sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
+	res = sqlglot.parse_one(sql_str)
+	insert(res)
 
 
 

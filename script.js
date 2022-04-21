@@ -33,7 +33,8 @@ async function parseSQL(sql_str) {
 	            if (reply == "success")
 	            {
                     console.log(data.result)
-	                return;
+                    //main.innerHTML="<p>"+ data.reply + "</p>"
+	                return data;
 	            }
 	            else
 	                {
@@ -112,6 +113,8 @@ form.addEventListener('submit', (e) => {
 
     if(sql_str) {
         parseSQL(sql_str)
+        //console.log(result)
+        //result.then((res)=>console.log(res)).catch((error)=>console.log(error))
 
         search.value = ''
     }
