@@ -150,8 +150,8 @@ def select(res):
 		where_val = where(res['where'])
 
 	order_col = None
-	if res['group'] != None:
-		order_col = orderby(res['group'])
+	if res['order'] != None:
+		order_col = orderby(res['order'])
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
