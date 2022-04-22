@@ -220,3 +220,12 @@ UPDATE school_directory SET age = 12 WHERE gpa = 3.6
 #MIN, MAX
 SELECT MIN(age), name FROM school_directory
 SELECT MAX(age), name FROM school_directory
+##ORDERBY
+SELECT * FROM school_directory ORDER BY grade
+SELECT * FROM school_directory ORDER BY gpa ASC
+SELECT age, name, grade FROM school_directory ORDER BY age DESC
+SELECT MIN(age), name FROM school_directory ORDER BY age
+SELECT MAX(age), name, grade FROM school_directory ORDER BY grade
+SELECT age, gpa, grade FROM school_directory ORDER BY gpa DESC LIMIT 3
+SELECT SUM(gpa), name, grade FROM school_directory
+SELECT COUNT(age) FROM school_directory
