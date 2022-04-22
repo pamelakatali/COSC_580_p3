@@ -373,7 +373,7 @@ def parse(sql_str, current_db=None):
 		table_name, cols, col_vals, where_val = update(res)
 		sel_tbl = current_db.tables.get(table_name)  # from
 		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
-		sel_tbl.update(cols, col_vals, where_val)
+		sel_tbl.update(cols, col_vals, where_rows)
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
