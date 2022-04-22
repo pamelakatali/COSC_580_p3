@@ -101,6 +101,29 @@ join_tbl.print_table()
 print('FULL JOIN')
 join_tbl = school_tbl.join(height_tbl, 'eq', 'name','name', 'full')
 join_tbl.print_table()
+
+####### DELETE ######
+#CREATE table -
+table_name = 'school_directory'
+columns = ['name','age','grade']
+col_types = ['int','int','int']
+school_tbl = current_db.create_table(table_name, columns, col_types)
+#INSERT INTO
+print('INSERT')
+school_tbl.insert(['jack','8','2'], ['name','age','grade'])
+school_tbl.insert(['jenny','10','3'], ['name','age','grade'])
+school_tbl.insert(['john','11','4'], ['name','age','grade'])
+school_tbl.insert(['jenny','8','3'], ['name','age','grade'])
+school_tbl.print_table()
+print(school_tbl.columns)
+
+sql_str = 'DELETE FROM school_directory WHERE age = 11'
+print('Current table')
+school_tbl.print_table()
+parse(sql_str,current_db)
+print('New table')
+school_tbl.print_table()
+
 '''
 def rel_1():
 	rel_i_i_1000 = []

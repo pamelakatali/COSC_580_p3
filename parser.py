@@ -150,6 +150,16 @@ def find_pre(res):
 		pre = None
 	return pre
 
+def delete(res):
+	table_name = res.find(Table).args['this'].args['this']
+	cols = []
+	wheres = res.args['where']
+	col_vals = []
+	where_val = None
+	if wheres != None:
+		where_val = where(wheres)
+	return table_name, where_val
+
 def limit(res):
 	return res.args['this'].args['this']
 
@@ -387,6 +397,13 @@ def parse(sql_str, current_db=None):
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
+	elif res.key == 'delete':
+		table_name, where_val = delete(res)
+		sel_tbl = current_db.tables.get(table_name)
+		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		sel_tbl.delete(where_rows)
+		return 'deleted'
+
 
 
 if __name__ == '__main__':

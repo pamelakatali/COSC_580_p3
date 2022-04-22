@@ -128,23 +128,17 @@ class Table:
     for i in range(len(res_key)):
       del self.rows[res_key[i]]
       self.rows.update({res_key[i]: row_objs[i]})
-
-  def delete(self, where_ids):
-    func = where_ids[0]
-    where_col = where_ids[1]
-    where_val = where_ids[2]
-    res = None
-
-    if func == 'eq':
-      res = self.col_btrees[where_col].get(where_val)
+  
+  def delete(self, where_rows):
+    res = where_rows
     res_key = []
     for ind in range(len(list(self.rows.values()))):
       for i in range(len(res)):
         if res[i] == list(self.rows.values())[ind]:
           res_key.append(ind)
-    for keys in res_key:
-      print(keys)
-      del self.rows[keys]
+    new_row = []
+    for i in range(len(res_key)):
+      del self.rows[res_key[i]]
 
   def left_outer_join(self, other_table, op, op_l, op_r):
     outer_tbl_name = self.name +'_outer_'+other_table.name
