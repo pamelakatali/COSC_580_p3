@@ -1,5 +1,6 @@
 import sqlglot
-from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column,Min, Max, Avg,Sum, Count, Ordered, Group, Order
+from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, \
+	Column, Min, Max, Avg, Sum, Count, Ordered, Group, Order
 from BTrees.OOBTree import OOBTree
 import pickle
 
@@ -121,8 +122,8 @@ def orderby(res):
 	return [col_name, key]
 
 def groupby(res):
-	col_name = res.find(Identifier).args['this']
-	return col_name
+	group_col = res.find(Identifier).args['this']
+	return group_col
 
 def find_pre(res):
 	pre = None
@@ -180,34 +181,97 @@ def select(res):
 			pres.append(find_pre(col))
 			cols.append(col.find(Identifier).args['this'])
 
-	print('Table name:',table_name)
+	print('Table name:', table_name)
 	print('Prefixes:', pres)
-	print('Columns:',cols)
-	print('Where:',where_val)
-	print('Join:',join_val)
-	print('Order_by:',order_col)
-
+	print('Columns:', cols)
+	print('Where:', where_val)
+	print('Join:', join_val)
+	print('Order_by:', order_col)
+	print('Group_by:', group_col)
 
 	return table_name, pres, cols, where_val, join_val, order_col, group_col
-	
+
+def pre_sel(cur_table, pres, cols, col_types, col_inds):
+	pre_inds = []
+	non_pre = []
+	first_pre_ind = None
+	for i in range(len(pres)):
+		if pres[i] != None:
+			pre_inds.append(i)
+		else:
+			non_pre.append(i)
+	res_rows = []
+	new_cols = []
+	new_new_col_types = []
+	temp_rows = []
+	for pre_ind in pre_inds:
+		res_row = None
+		pre = pres[pre_ind]
+		if pre == 'Min':
+			if first_pre_ind == None:
+				first_pre_ind = pre_ind
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.min(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
+			temp_rows.append(cur_table.min(cols[pre_ind]))
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Max':
+			if first_pre_ind == None:
+				first_pre_ind = pre_ind
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.max(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
+			new_new_col_types.append(col_types[pre_ind])
+			temp_rows.append(cur_table.max(cols[pre_ind]))
+		elif pre == 'Sum':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.sum(cols[pre_ind])
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Count':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.count(cols[pre_ind])
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Avg':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.avg(cols[pre_ind])[pre_ind]
+			new_new_col_types.append(col_types[pre_ind])
+		res_rows.append(res_row)
+	for non_ind in non_pre:
+		new_cols.insert(non_ind, cols[non_ind])
+		new_new_col_types.append(col_types[non_ind])
+	first_row = None
+	if first_pre_ind != None:
+		first_row = temp_rows[0]
+	row_vals = []
+
+	for i in range(len(new_cols)):
+		if i not in pre_inds:
+			col_name = new_cols[i]
+			cur_ind = cur_table.columns.index(col_name)
+			if first_row != None:
+				row_vals.append(first_row.get_vals()[cur_ind])
+			else:
+				row_vals.append(cur_table.rows[0].get_vals()[cur_ind])
+		else:
+			row_vals.append(res_rows[i])
+	return row_vals, new_cols, new_new_col_types
+
+
 def parse(sql_str, current_db=None):
-	
 	res = sqlglot.parse_one(sql_str)
 	print(res)
 	print('--------------------------------------')
-	
+
 	if res.key == 'create':
 		table_name, cols, col_types = create(res)
 		new_tbl = current_db.create_table(table_name, cols, col_types)
-		return 'Tables:'+str(list(current_db.tables.keys()))
+		return 'Tables:' + str(list(current_db.tables.keys()))
 
 	elif res.key == 'insert':
 		table_name, cols, col_vals = insert(res)
-		
+
 		ins_tbl = current_db.tables.get(table_name)
 		ins_tbl.insert(col_vals, cols)
 		ins_tbl.print_table()
-		return 'Inserted row into '+ ins_tbl.name
+		return 'Inserted row into ' + ins_tbl.name
 
 	elif res.key == 'select':
 		table_name, pres, cols, where_val, join_val, order_col, group_col = select(res)
@@ -240,75 +304,33 @@ def parse(sql_str, current_db=None):
 		#	col_inds.append(sel_tbl.columns.index(c))
 
 		print('Tables:', list(current_db.tables.keys()))
+		grp_tables = None
+
+		print('Tables:', list(current_db.tables.keys()))
+		if group_col != None:
+			grp_tables = sel_tbl.groupby(group_col)
+			cur_table = grp_tables[0]
+			for ind in range(len(grp_tables) - 1):
+				cur_table.insert(grp_tables[0].rows[0].values, grp_tables[0].columns)
 		first_col = cols[0]
-		print('pres are ')
-		print(pres)
+
 		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
 
 		if 'Min' in pres or 'Max' in pres or 'Sum' in pres or 'Count' in pres or 'Avg' in pres:
-			pre_inds = []
-			non_pre = []
-			first_pre_ind = None
-			for i in range(len(pres)):
-				if pres[i] != None:
-					pre_inds.append(i)
-				else:
-					non_pre.append(i)
-			res_rows = []
-			new_cols = []
-			new_new_col_types = []
-			temp_rows = []
-			for pre_ind in pre_inds:
-				res_row = None
-				pre = pres[pre_ind]
-				if pre == 'Min':
-					if first_pre_ind == None:
-						first_pre_ind = pre_ind
-					new_cols.append('MIN(' + cols[pre_ind] + ')')
-					res_row = sel_tbl.min(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
-					temp_rows.append(sel_tbl.min(cols[pre_ind]))
-					new_new_col_types.append(new_col_types[pre_ind])
-				elif pre == 'Max':
-					if first_pre_ind == None:
-						first_pre_ind = pre_ind
-					new_cols.append('MAX(' + cols[pre_ind] + ')')
-					res_row = sel_tbl.max(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
-					new_new_col_types.append(new_col_types[pre_ind])
-					temp_rows.append(sel_tbl.max(cols[pre_ind]))
-				elif pre == 'Sum':
-					new_cols.append('SUM(' + cols[pre_ind] + ')')
-					res_row = sel_tbl.sum(cols[pre_ind])
-					new_new_col_types.append(new_col_types[pre_ind])
-				elif pre == 'Count':
-					new_cols.append('COUNT(' + cols[pre_ind] + ')')
-					res_row = sel_tbl.count(cols[pre_ind])
-					new_new_col_types.append(new_col_types[pre_ind])
-				elif pre == 'Avg':
-					new_cols.append('AVG(' + cols[pre_ind] + ')')
-					res_row = sel_tbl.avg(cols[pre_ind])[pre_ind]
-					new_new_col_types.append(new_col_types[pre_ind])
-				res_rows.append(res_row)
-			for non_ind in non_pre:
-				new_cols.insert(non_ind, cols[non_ind])
-				new_new_col_types.append(new_col_types[non_ind])
-			new_tbl = CustomTable(new_name, new_cols, new_new_col_types)
-			first_row = None
-			if first_pre_ind != None:
-				first_row = temp_rows[0]
-			row_vals = []
-
-			for i in range(len(new_cols)):
-				if i not in pre_inds:
-					col_name = new_cols[i]
-					cur_ind = sel_tbl.columns.index(col_name)
-					if first_row != None:
-						row_vals.append(first_row.get_vals()[cur_ind])
-					else:
-						row_vals.append(sel_tbl.rows[0].get_vals()[cur_ind])
-				else:
-					row_vals.append(res_rows[i])
-			new_tbl.insert(row_vals, new_cols)
-
+			if group_col == None:
+				row_vals, new_cols, new_new_col_types = pre_sel(sel_tbl, pres, cols, new_col_types, col_inds)
+				new_tbl = CustomTable(new_name, new_cols, new_new_col_types)
+				new_tbl.insert(row_vals, new_cols)
+			else:
+				grp_rows = []
+				new_cols = None
+				new_new_col_types = None
+				for tbl in grp_tables:
+					row_vals, new_cols, new_new_col_types = pre_sel(tbl, pres, cols, new_col_types, col_inds)
+					grp_rows.append(row_vals)
+				new_tbl = CustomTable(new_name, new_cols, new_new_col_types)
+				for vals in grp_rows:
+					new_tbl.insert(vals, new_cols)
 		else:
 			for k in first_col_keys:
 				res_rows = sel_tbl.col_btrees[first_col].get(k)
@@ -338,32 +360,29 @@ def parse(sql_str, current_db=None):
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
-	
-
-
 
 
 if __name__ == '__main__':
-	#sql = 'CREATE TABLE trips (level INT, row_date INT)'
+	# sql = 'CREATE TABLE trips (level INT, row_date INT)'
 	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
-	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
-	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-	#sql = 'SELECT OrderID, CustomerName, OrderDate \
+	# sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
+	# VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
+	# sql = 'SELECT OrderID, CustomerName, OrderDate \
 	#		FROM Orders \
 	#		INNER JOIN Customers ON CustomerID=OrderDate;'
-	#sql = 'CREATE DATABASE mydatabase;'
-	#sql = 'USE mytbl;'
+	# sql = 'CREATE DATABASE mydatabase;'
+	# sql = 'USE mytbl;'
 
-	#parse(sql)
-	#db = DBMS()
-	#pickle.dump(, open( 'dbms.pkl', 'wb' ))
+	# parse(sql)
+	# db = DBMS()
+	# pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
 	# sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
 	# res = sqlglot.parse_one(sql_str)
 	# insert(res)
 
-	sql_str2= 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
+	sql_str2 = 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
 	res = sqlglot.parse_one(sql_str2)
 	select(res)
-	# print(res.args['order'].find(Ordered).args['desc'])
-	# print(cols)
+# print(res.args['order'].find(Ordered).args['desc'])
+# print(cols)
