@@ -39,17 +39,27 @@ def update(res):
 	wheres = res.args['where']
 	col_vals = []
 	where_val = None
+	lit_flag = False
+	if expr[0].find(Literal) == None:
+		lit_flag = False
+	else:
+		lit_flag = True
+
 	if wheres != None:
 		where_val = where(wheres)
 	if len(expr) == 1:
 		cols = [expr[0].args['this'].args['this'].args['this']]
-		col_vals = [expr[0].args['expression'].args['this'].args['this']]
+		if lit_flag == False:
+			col_vals = [expr[0].args['expression'].args['this'].args['this']]
+		else:
+			col_vals = [expr[0].find(Literal).args['this']]
 	else:
 		for col in expr:
 			cols.append(col.args['this'].args['this'].args['this'])
-			col_vals.append(col.args['expression'].args['this'].args['this'])
-	print('Columns:',cols)
-	print('Values:',col_vals)
+			if lit_flag == False:
+				col_vals.append(col.args['expression'].args['this'].args['this'])
+			else:
+				col_vals.append(col.find(Literal).args['this'])
 	return table_name, cols, col_vals, where_val
 
 #DROP Table
