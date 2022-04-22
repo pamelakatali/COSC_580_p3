@@ -11,11 +11,14 @@ class Row:
   def __str__(self):
     return str(self.values)
 
-  def __eq__(self, other):
-    for i in range(len(self.values)):
-      if self.values[i] != other.values[i]:
-        return False
-    return True
+  def _eq_(self, other):
+    if other != None:
+      for i in range(len(self.values)):
+        if self.values[i] != other.values[i]:
+          return False
+      return True
+    else:
+      return False
 
   def get_vals(self):
     return self.values
