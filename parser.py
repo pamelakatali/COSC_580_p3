@@ -275,7 +275,10 @@ def parse(sql_str, current_db=None):
 
 	elif res.key == 'select':
 		table_name, pres, cols, where_val, join_val, order_col, group_col = select(res)
+		
 		sel_tbl = current_db.tables.get(table_name)  # from
+		if cols[0] == 'star':
+			cols = sel_tbl.columns
 		# sel_tbl.select(cols, where_val, join_val)
 
 		if where_val != None:  # where
