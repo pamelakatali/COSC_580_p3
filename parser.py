@@ -384,6 +384,8 @@ def parse(sql_str, current_db=None):
 			print(first_col_keys)
 			for k in first_col_keys:
 				res_rows = sel_tbl.col_btrees[first_col].get(k)
+				if not isinstance(res_rows, list):
+					res_rows = [res_rows]
 				out_rows = []
 				print(res_rows)
 				for i in range(len(res_rows)):

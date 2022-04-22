@@ -110,16 +110,24 @@ class Table:
     return new_res
 
   def update(self, cols, new_vals, where_rows):
-    #
     res = where_rows
+    count = 0
+    for i in range(len(res)):
+      res[i] = convert_datatype(res[i], self.col_types[count])
+      count += 1
     res_key = []
     for ind in range(len(list(self.rows.values()))):
       for i in range(len(res)):
         if res[i] == list(self.rows.values())[ind]:
           res_key.append(ind)
+    orig_vals = []
     col_inds = []
+    for i in range(len(res)):
+      orig_vals.append(res[i])
     for col in range(len(cols)):
       col_inds.append(list(self.col_btrees.keys()).index(cols[col]))
+    for new_ind in range(len(new_vals)):
+      new_vals[new_ind] = convert_datatype(new_vals[new_ind], self.col_types[col_inds[new_ind]])
     new_row = []
     for x in range(len(res)):
       temp = []
@@ -130,13 +138,55 @@ class Table:
         else:
           temp.append(new_vals[new_val_ind])
           new_val_ind += 1
-        new_row.append(temp)
+      new_row.append(temp)
     row_objs = []
     for i in new_row:
       row_objs.append(Row(i))
     for i in range(len(res_key)):
       del self.rows[res_key[i]]
       self.rows.update({res_key[i]: row_objs[i]})
+    for ind in range(len(res)):
+      print('length of res is ', len(res))
+      print('res of index ', ind)
+      cur_row = res[ind]
+      for c_ind in range(len(self.columns)):
+        want = []
+        output = self.col_btrees[self.columns[c_ind]][res[ind].get_vals()[c_ind]]
+        for out_ind in range(len(output)):
+          if isinstance(output, list):
+            if output[out_ind] in orig_vals:
+              continue
+            else:
+              want.append(output[out_ind])
+          else:
+            if output in orig_vals:
+              continue
+            else:
+              want.append(output)
+        del self.col_btrees[self.columns[c_ind]][res[ind].get_vals()[c_ind]]
+        res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[c_ind])
+        if res_rows != None:
+          print(len(res_rows))
+        if res_rows != None:
+          print(len(res_rows))
+        if c_ind in col_inds:
+          if len(want) != 0:
+            self.col_btrees[self.columns[c_ind]].update({res[ind].get_vals()[col_inds[0]]: want})
+          res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[col_inds[0]])
+          if res_rows != None:
+            res_rows.append(row_objs[ind])
+          else:
+            res_rows = [row_objs[ind]]
+          self.col_btrees[self.columns[c_ind]].update({new_vals[0]: [row_objs[ind]]})
+        else:
+          if len(want) != 0:
+            self.col_btrees[self.columns[c_ind]].update({res[ind].get_vals()[c_ind]: want})
+          res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[c_ind])
+          if res_rows != None:
+            res_rows.append(row_objs[ind])
+          else:
+            res_rows = [row_objs[ind]]
+          self.col_btrees[self.columns[c_ind]].update({cur_row.values[c_ind]: res_rows})
 
   def delete(self, where_rows):
     res = where_rows
