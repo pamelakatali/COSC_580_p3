@@ -42,15 +42,14 @@ def update(res):
 	if wheres != None:
 		where_val = where(wheres)
 	if len(expr) == 1:
-
-		cols = [expr[0].find(Identifier).args['this']]
-		col_vals = [expr[0].find(Literal).args['this']]
+		cols = [expr[0].args['this'].args['this'].args['this']]
+		col_vals = [expr[0].args['expression'].args['this'].args['this']]
 	else:
 		for col in expr:
-			cols.append(col.find(Identifier).args['this'])
-			col_vals.append(col.find(Literal).args['this'])
-	print(cols)
-	print(col_vals)
+			cols.append(col.args['this'].args['this'].args['this'])
+			col_vals.append(col.args['expression'].args['this'].args['this'])
+	print('Columns:',cols)
+	print('Values:',col_vals)
 	return table_name, cols, col_vals, where_val
 
 #DROP Table
