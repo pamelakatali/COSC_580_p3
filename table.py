@@ -5,7 +5,7 @@ import numpy as np
 from sqlglot.expressions import DataType
 
 def convert_datatype(val, datatype):
-  if datatype == DataType.Type.INT:
+  if datatype == DataType.Type.INT and val != None:
     return int(val)
   if datatype == DataType.Type.DOUBLE:
     return float(val)
@@ -128,7 +128,7 @@ class Table:
     for i in range(len(res_key)):
       del self.rows[res_key[i]]
       self.rows.update({res_key[i]: row_objs[i]})
-  
+
   def delete(self, where_rows):
     res = where_rows
     res_key = []

@@ -62,6 +62,7 @@ def update(res):
 				col_vals.append(col.find(Literal).args['this'])
 	return table_name, cols, col_vals, where_val
 
+
 #DROP Table
 def drop_table(res):
 	table_name = res.find(Table).args['this'].args['this']
@@ -108,9 +109,14 @@ def where(res):
 
 def join(res):
 	join_dict = {}
-	
+
 	res = res[0]
-	join_dict['type'] = res.args['kind']
+	print(res.args)
+	if res.args['kind'] != None:
+		join_dict['type'] = res.args['kind'] #inner, cross
+	else:
+		join_dict['type'] = res.args['side'] #left, right
+
 	join_dict['Table'] = res.find(Table).args['this'].args['this']
 
 	res = res.args['on']
@@ -168,7 +174,7 @@ def select(res):
 	print(res.keys())
 
 	join_val = None
-	print(res['joins'])
+	#print(res['joins'])
 	if len(res['joins']) > 0:
 		join_val = join(res['joins'])
 	
@@ -309,6 +315,11 @@ def parse(sql_str, current_db=None):
 			cols = sel_tbl.columns
 		# sel_tbl.select(cols, where_val, join_val)
 
+		if join_val != None:
+			other_table = current_db.tables.get(join_val['Table'])
+			sel_tbl = sel_tbl.join(other_table,join_val['operation'],join_val['operand_l'],join_val['operand_r'],join_val['type'])
+
+
 		if where_val != None:  # where
 			where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
 			new_name = sel_tbl.name + '_temp'
@@ -405,7 +416,6 @@ def parse(sql_str, current_db=None):
 		return 'deleted'
 
 
-
 if __name__ == '__main__':
 	# sql = 'CREATE TABLE trips (level INT, row_date INT)'
 	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
@@ -427,6 +437,8 @@ if __name__ == '__main__':
 
 	sql_str2 = 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
 	sql_str2 = "SELECT * FROM school_directory LIMIT 10"
+	sql_str2 = "UPDATE school_directory SET age = 12 WHERE name = 'jane'"
+	sql_str2 = "SELECT name, age, grade, height FROM school_directory RIGHT JOIN height_tbl ON name = name"
 	res = sqlglot.parse_one(sql_str2)
 
 	select(res)
