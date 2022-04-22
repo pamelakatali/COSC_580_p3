@@ -168,7 +168,8 @@ SELECT name, age FROM school_directory
 SELECT name, grade FROM school_directory
 SELECT name, age FROM school_directory WHERE age = 10
 SELECT name, age FROM school_directory WHERE age >= 10
+SELECT name, age FROM school_directory WHERE age <= 10
 SELECT name, age FROM school_directory WHERE gpa >= 3.4
 SELECT * FROM school_directory
-
-SELECT * FROM school_directory LIMIT 10 #limit is important
+SELECT * FROM school_directory LIMIT 10
+SELECT * FROM school_directory LIMIT 1

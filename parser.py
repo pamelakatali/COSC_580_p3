@@ -141,6 +141,8 @@ def find_pre(res):
 		pre = None
 	return pre
 
+def limit(res):
+	return res.args['this'].args['this']
 
 def select(res):
 	res = res.args
@@ -162,6 +164,12 @@ def select(res):
 	group_col = None
 	if res['group'] != None:
 		group_col = groupby(res['group'])
+
+	limit_val = None 
+	if res['limit'] != None:
+		limit_val = limit(res['limit'])
+		limit_val = int(limit_val)
+
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
@@ -188,8 +196,9 @@ def select(res):
 	print('Join:', join_val)
 	print('Order_by:', order_col)
 	print('Group_by:', group_col)
+	print('Limit:', limit_val)
 
-	return table_name, pres, cols, where_val, join_val, order_col, group_col
+	return table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val
 
 def pre_sel(cur_table, pres, cols, col_types, col_inds):
 	pre_inds = []
@@ -274,7 +283,7 @@ def parse(sql_str, current_db=None):
 		return 'Inserted row into ' + ins_tbl.name
 
 	elif res.key == 'select':
-		table_name, pres, cols, where_val, join_val, order_col, group_col = select(res)
+		table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val = select(res)
 		
 		sel_tbl = current_db.tables.get(table_name)  # from
 		if cols[0] == 'star':
@@ -350,9 +359,15 @@ def parse(sql_str, current_db=None):
 
 		if order_col != None:
 			new_tbl = new_tbl.orderby(order_col[0], order_col[1])
+		
 		print('THIS IS THE NEW TABLE')
 		print(new_tbl.columns)
-		new_tbl.print_table()
+		if limit_val != None:
+			new_tbl.print_table(limit=limit_val)
+			return new_tbl.print_table(limit=limit_val)
+		else:
+			new_tbl.print_table()
+		
 		return new_tbl.print_table() #'Select done'
 
 	elif res.key == 'update':
@@ -385,7 +400,9 @@ if __name__ == '__main__':
 	# insert(res)
 
 	sql_str2 = 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
+	sql_str2 = "SELECT * FROM school_directory LIMIT 10"
 	res = sqlglot.parse_one(sql_str2)
+
 	select(res)
 # print(res.args['order'].find(Ordered).args['desc'])
 # print(cols)

@@ -28,11 +28,16 @@ class Table:
     #self.foreign_key = None
 
 
-  def print_table(self):
+  def print_table(self, limit=10):
     ret = ''
+    count = 0
     for r in self.rows.values():
-      print(r)
-      ret = ret + str(r) +'\n'
+      if count < limit:
+        print(r)
+        ret = ret + str(r) +'\n'
+      else:
+        break
+      count += 1
     return ret
 
   def combine_tables(self, other_table):
