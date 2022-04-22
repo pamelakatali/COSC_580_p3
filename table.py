@@ -7,7 +7,7 @@ from sqlglot.expressions import DataType
 def convert_datatype(val, datatype):
   if datatype == DataType.Type.INT and val != None:
     return int(val)
-  if datatype == DataType.Type.DOUBLE:
+  if datatype == DataType.Type.DOUBLE and val != None:
     return float(val)
   else:
     return val
@@ -39,6 +39,15 @@ class Table:
         break
       count += 1
     return ret
+
+  def print_col_b_trees(self):
+    for c in self.columns:
+      print(c)
+      curr_col = self.col_btrees[c]
+      for r_lst in curr_col.values():
+        for r in r_lst:
+          print(r)
+    #return ret
 
   def combine_tables(self, other_table):
     for k in other_table.rows.keys():
@@ -144,11 +153,21 @@ class Table:
     outer_tbl_name = self.name +'_outer_'+other_table.name
     outer_tbl_cols = self.columns + other_table.columns
     outer_tbl_col_types = self.col_types +other_table.col_types
-    outer_tbl = Table(outer_tbl_name,outer_tbl_cols,outer_tbl_col_types)
+
+    
 
     inner_tbl_name = self.name +'_outer_'+other_table.name
     inner_tbl_cols = self.columns + other_table.columns
     inner_tbl_col_types = self.col_types +other_table.col_types
+
+
+    if op_l == op_r:
+      col_l = self.columns.index(op_l)
+      col_r = other_table.columns.index(op_r)
+      outer_tbl_cols[len(self.columns)+col_r] = self.columns[col_r] +'_right'
+      inner_tbl_cols[len(self.columns)+col_r] = self.columns[col_r] +'_right'
+
+    outer_tbl = Table(outer_tbl_name,outer_tbl_cols,outer_tbl_col_types)
     inner_tbl = Table(inner_tbl_name,inner_tbl_cols,inner_tbl_col_types)
     
     left_keys = list(self.col_btrees[op_l].keys())
@@ -173,15 +192,27 @@ class Table:
   def left_join(self, other_table, op, op_l, op_r):
     join_tbl_name = self.name +'_'+other_table.name
     join_tbl_cols = self.columns + other_table.columns
+    if op_l == op_r:
+      col_l = self.columns.index(op_l)
+      col_r = other_table.columns.index(op_r)
+      #join_tbl_cols[col_l] = self.columns[col_l] +'_left'
+      #op_l = join_tbl_cols[col_l]
+      join_tbl_cols[len(self.columns)+col_r] = self.columns[col_r] +'_right'
+      #op_r = join_tbl_cols[col_l]
+
     join_tbl_col_types = self.col_types +other_table.col_types
     join_tbl = Table(join_tbl_name,join_tbl_cols,join_tbl_col_types)
+
 
     #if op_r in other_table.columns: #compare columns
     #left outer join
     left_keys = list(self.col_btrees[op_l].keys())
+
     for k in left_keys:
       left_rows = self.col_btrees[op_l].get(k)
+
       right_rows = other_table.col_btrees[op_r].get(k) #lst
+
 
       for lft_row in left_rows:
         if right_rows != None:
@@ -199,11 +230,21 @@ class Table:
     outer_tbl_name = self.name +'_outer_'+other_table.name
     outer_tbl_cols = self.columns + other_table.columns
     outer_tbl_col_types = self.col_types +other_table.col_types
-    outer_tbl = Table(outer_tbl_name,outer_tbl_cols,outer_tbl_col_types)
+
 
     inner_tbl_name = self.name +'_outer_'+other_table.name
     inner_tbl_cols = self.columns + other_table.columns
     inner_tbl_col_types = self.col_types +other_table.col_types
+
+    if op_l == op_r:
+      col_l = self.columns.index(op_l)
+      col_r = other_table.columns.index(op_r)
+      outer_tbl_cols[col_l] = self.columns[col_l] +'_left'
+      inner_tbl_cols[col_l] = self.columns[col_l] +'_left'
+
+      print(inner_tbl_cols)
+
+    outer_tbl = Table(outer_tbl_name,outer_tbl_cols,outer_tbl_col_types)
     inner_tbl = Table(inner_tbl_name,inner_tbl_cols,inner_tbl_col_types)
 
     right_keys = list(other_table.col_btrees[op_r].keys())
@@ -228,8 +269,18 @@ class Table:
     join_tbl_name = self.name +'_'+other_table.name
     join_tbl_cols = self.columns + other_table.columns
     join_tbl_col_types = self.col_types +other_table.col_types
-    join_tbl = Table(join_tbl_name,join_tbl_cols,join_tbl_col_types)
 
+
+    if op_l == op_r:
+      col_l = self.columns.index(op_l)
+      col_r = other_table.columns.index(op_r)
+      join_tbl_cols[col_l] = self.columns[col_l] +'_left'
+      #op_l = join_tbl_cols[col_l]
+      #join_tbl_cols[len(self.columns)+col_r] = self.columns[col_r] +'_right'
+      #op_r = join_tbl_cols[col_l]
+      print(join_tbl_cols)
+
+    join_tbl = Table(join_tbl_name,join_tbl_cols,join_tbl_col_types)
 
     right_keys = list(other_table.col_btrees[op_r].keys())
     for k in right_keys:
@@ -249,6 +300,7 @@ class Table:
     return join_tbl
 
   def join(self, other_table, op, op_l, op_r, j_type='left'):
+    print(j_type)
     if j_type == 'left':
       return self.left_join(other_table, op, op_l, op_r)
     elif j_type == 'right':

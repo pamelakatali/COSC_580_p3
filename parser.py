@@ -113,9 +113,9 @@ def join(res):
 	res = res[0]
 	print(res.args)
 	if res.args['kind'] != None:
-		join_dict['type'] = res.args['kind'] #inner, cross
+		join_dict['type'] = res.args['kind'].lower() #inner, cross
 	else:
-		join_dict['type'] = res.args['side'] #left, right
+		join_dict['type'] = res.args['side'].lower() #left, right
 
 	join_dict['Table'] = res.find(Table).args['this'].args['this']
 
@@ -318,7 +318,10 @@ def parse(sql_str, current_db=None):
 		if join_val != None:
 			other_table = current_db.tables.get(join_val['Table'])
 			sel_tbl = sel_tbl.join(other_table,join_val['operation'],join_val['operand_l'],join_val['operand_r'],join_val['type'])
-
+			print("preprint table")
+			sel_tbl.print_table()
+			sel_tbl.print_col_b_trees()
+			print("preprint table")
 
 		if where_val != None:  # where
 			where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
@@ -374,15 +377,22 @@ def parse(sql_str, current_db=None):
 				for vals in grp_rows:
 					new_tbl.insert(vals, new_cols)
 		else:
+			print("preprint table")
+			sel_tbl.print_table()
+			sel_tbl.print_col_b_trees()
+			print("preprint table")
+			print(first_col_keys)
 			for k in first_col_keys:
 				res_rows = sel_tbl.col_btrees[first_col].get(k)
 				out_rows = []
+				print(res_rows)
 				for i in range(len(res_rows)):
 					new_row = []
 					for j in col_inds:  # fill in row columns
 						new_row.append(copy.deepcopy(res_rows[i].values[j]))
 
 					out_rows.append(new_row)
+				print(out_rows)
 
 				# print('After:',out_rows)
 				new_tbl.insert_bulk(out_rows, new_tbl.columns)
