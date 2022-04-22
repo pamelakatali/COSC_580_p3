@@ -265,7 +265,7 @@ def pre_sel(cur_table, pres, cols, col_types, col_inds):
 			new_new_col_types.append(col_types[pre_ind])
 		elif pre == 'Avg':
 			new_cols.append(cols[pre_ind])
-			res_row = cur_table.avg(cols[pre_ind])[pre_ind]
+			res_row = cur_table.avg(cols[pre_ind])
 			new_new_col_types.append(col_types[pre_ind])
 		res_rows.append(res_row)
 	for non_ind in non_pre:
