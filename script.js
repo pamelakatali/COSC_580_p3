@@ -17,6 +17,21 @@ async function getUser(username) {
     }
 }
 
+function addQueryToCard(repos) {
+    const reposEl = document.getElementById('repos')
+
+    repos
+        .slice(0, 5)
+        .forEach(repo => {
+            const repoEl = document.createElement('a')
+            repoEl.classList.add('repo')
+            repoEl.href = repo.html_url
+            repoEl.target = '_blank'
+            repoEl.innerText = repo.name
+
+            reposEl.appendChild(repoEl)
+        })
+}
 
 async function parseSQL(sql_str) {
 	var sql_data = sql_str

@@ -38,15 +38,22 @@ def index():
 def pass_val():
     sql_str = request.args.get('value')
     #parsed_sql = sqlglot.parse_one(sql_str)
+    vals = sql_str.split(' ')
     if len(dbms.databases) == 0: #create db if none
-        vals = sql_str.split(' ')
-        db = dbms.create_db(vals[2]) 
-        res = 'Databases:'+str(list(dbms.databases))
+        if vals[0].lower() == 'create':
+            vals = sql_str.split(' ')
+            db = dbms.create_db(vals[2]) 
+            res = 'Databases:'+str(list(dbms.databases))
+        else:
+            res = 'CREATE a database to implement actions'
     elif dbms.curr_db is None: #create table
-        vals = sql_str.split(' ')
-        use_db = dbms.databases.get(vals[1]) 
-        dbms.curr_db = use_db
-        res = 'Using table: '+ use_db.name
+        if vals[0].lower() == 'use':
+            vals = sql_str.split(' ')
+            use_db = dbms.databases.get(vals[1]) 
+            dbms.curr_db = use_db
+            res = 'Using table: '+ use_db.name
+        else:
+            res = 'USE a database to implement actions'
     else:
         res = parse(sql_str, dbms.curr_db)
         #res = 'hey'

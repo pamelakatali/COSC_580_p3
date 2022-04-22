@@ -29,8 +29,11 @@ class Table:
 
 
   def print_table(self):
+    ret = ''
     for r in self.rows.values():
       print(r)
+      ret = ret + str(r) +'\n'
+    return ret
 
   def combine_tables(self, other_table):
     for k in other_table.rows.keys():
