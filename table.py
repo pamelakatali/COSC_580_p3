@@ -110,11 +110,22 @@ class Table:
     return new_res
 
   def update(self, cols, new_vals, where_rows):
+    #
     res = where_rows
-    count = 0
-    for i in range(len(res)):
-      res[i] = convert_datatype(res[i], self.col_types[count])
-      count += 1
+    #
+    # print('type of res issssss ', type(res))
+    # count = 0
+    # if not isinstance(res, list):
+    # for i in range(len(res)):
+    #   for j in range(len(self.col_types)):
+    #     res[i][j] = convert_datatype(res[i], self.col_types[j])
+    # else:
+    #   for i in range(len(res)):
+    #     count = 0
+    #     for j in range(len(res[i])):
+    #       res[i][j] = convert_datatype(res[i], self.col_types[count])
+    #       count += 1
+
     res_key = []
     for ind in range(len(list(self.rows.values()))):
       for i in range(len(res)):
@@ -128,6 +139,7 @@ class Table:
       col_inds.append(list(self.col_btrees.keys()).index(cols[col]))
     for new_ind in range(len(new_vals)):
       new_vals[new_ind] = convert_datatype(new_vals[new_ind], self.col_types[col_inds[new_ind]])
+
     new_row = []
     for x in range(len(res)):
       temp = []
@@ -145,59 +157,177 @@ class Table:
     for i in range(len(res_key)):
       del self.rows[res_key[i]]
       self.rows.update({res_key[i]: row_objs[i]})
+
+    new_res = []
+    if isinstance(res,list):
+      new_res = res
+    else:
+      new_res.append(res)
+    all_updated = []
     for ind in range(len(res)):
-      print('length of res is ', len(res))
-      print('res of index ', ind)
+      # print('res ind is ', ind)
       cur_row = res[ind]
+      up_row = row_objs[ind]
       for c_ind in range(len(self.columns)):
-        want = []
-        output = self.col_btrees[self.columns[c_ind]][res[ind].get_vals()[c_ind]]
-        for out_ind in range(len(output)):
-          if isinstance(output, list):
-            if output[out_ind] in orig_vals:
-              continue
-            else:
-              want.append(output[out_ind])
-          else:
-            if output in orig_vals:
-              continue
-            else:
-              want.append(output)
-        del self.col_btrees[self.columns[c_ind]][res[ind].get_vals()[c_ind]]
-        res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[c_ind])
-        if res_rows != None:
-          print(len(res_rows))
-        if res_rows != None:
-          print(len(res_rows))
-        if c_ind in col_inds:
-          if len(want) != 0:
-            self.col_btrees[self.columns[c_ind]].update({res[ind].get_vals()[col_inds[0]]: want})
-          res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[col_inds[0]])
-          if res_rows != None:
-            res_rows.append(row_objs[ind])
-          else:
-            res_rows = [row_objs[ind]]
-          self.col_btrees[self.columns[c_ind]].update({new_vals[0]: [row_objs[ind]]})
+        wants = []
+        ups = []
+        cur_col = self.columns[c_ind]
+        if (cur_col, cur_row.get_vals()[c_ind]) in all_updated:
+          continue
         else:
-          if len(want) != 0:
-            self.col_btrees[self.columns[c_ind]].update({res[ind].get_vals()[c_ind]: want})
-          res_rows = self.col_btrees[self.columns[c_ind]].get(res[ind].get_vals()[c_ind])
-          if res_rows != None:
-            res_rows.append(row_objs[ind])
+          temps = self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+          # all_updated.append((cur_col, cur_row.get_vals()[c_ind]))
+          if isinstance(temps, list):
+            for t in temps:
+              if t not in new_res:
+                wants.append(t)
+              else:
+                ups.append(t)
           else:
-            res_rows = [row_objs[ind]]
-          self.col_btrees[self.columns[c_ind]].update({cur_row.values[c_ind]: res_rows})
+            if temps not in new_res:
+              wants.append(temps)
+            else:
+              ups.append(temps)
+          # print('what we are testing, ' ,cur_col, cur_row.get_vals()[c_ind])
+          # print('these are the wants')
+          # for w in wants:
+          #   print(w.values)
+          # print('------------')
+          # print('these are the ups')
+          # for up in ups:
+          #   print(up.values)
+          # print('xxxxxxxxxxxx')
+        if c_ind in col_inds:
+          # print('UPDATED COLUMN')
+          ## we want to update this column value
+          ## need to fill in both pre_update and update
+          del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+          if len(wants) != 0:
+            ## we want to keep these in the original
+            for w in wants:
+              self.col_btrees[cur_col].insert(cur_row.get_vals()[c_ind], w)
+            # self.col_btrees[cur_col].update({cur_row.get_vals()[c_ind]: wants})
+          ## what is the new value we want to udpate?
+          index_of  = col_inds.index(c_ind)
+          # print('check index_of is correct:  ', cols[index_of], ' ', self.columns[c_ind])
+          ## need to check all res_rows and put in all the correct ones right away
+          cor_inds = []
+          if len(ups) != 0:
+            for up in ups:
+              cor_inds.append(new_res.index(up))
+          if len(cor_inds) != 0:
+            for corind in cor_inds:
+              row_res = self.col_btrees[cur_col].get(new_vals[index_of])
+              if isinstance(row_res, list):
+                row_res.append(row_objs[corind])
+              else:
+                if row_res != None:
+                  row_res = [row_res, row_objs[corind]]
+                else:
+                  row_res = row_objs[corind]
+              # print('if 1 added 0 if not : UPS')
+              # if isinstance(row_res, list):
+              #   for i in row_res:
+              #     print(i.values)
+              # else:
+              #   if row_res != None:
+              #     print(row_res.values)
+              if self.col_btrees[cur_col].insert(new_vals[index_of], row_res) == 0:
+                del self.col_btrees[cur_col][new_vals[index_of]]
+                self.col_btrees[cur_col].insert(new_vals[index_of], row_res)
+              # self.col_btrees[cur_col].insert(new_vals[index_of], row_objs[corind])
+              # self.col_btrees[cur_col].update({new_vals[index_of]: [row_objs[corind]]})
+        else:
+          # print('NOT UPDATED COLUMN')
+
+          ## don't want to update
+          del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+          ## find the ones to keep
+          if len(wants) != 0:
+            # print('we have wants')
+            # print(wants[0])
+            ## we want to keep these in the original
+            for w in wants:
+              # print('if 1 added 0 if not : wants')
+              self.col_btrees[cur_col].insert(cur_row.get_vals()[c_ind], w)
+            # self.col_btrees[cur_col].update({cur_row.get_vals()[c_ind]: wants})
+          ## need to check all res_rows and put in all the correct ones right away
+          cor_inds = []
+          if len(ups) != 0:
+            for up in ups:
+              cor_inds.append(new_res.index(up))
+          if len(cor_inds) != 0:
+            for corind in cor_inds:
+              row_res = self.col_btrees[cur_col].get(cur_row.get_vals()[c_ind])
+              if isinstance(row_res, list):
+                row_res.append(row_objs[corind])
+              else:
+                if row_res != None:
+                  row_res = [row_res, row_objs[corind]]
+                else:
+                  row_res = row_objs[corind]
+              # print('if 1 added 0 if not : UPS')
+              # if isinstance(row_res, list):
+              #   for i in row_res:
+              #     print(i.values)
+              # else:
+              #   if row_res != None:
+              #     print(row_res.values)
+              # print('these are keys')
+              # print(list(self.col_btrees[cur_col].keys()))
+              # print('my key is ', cur_row.get_vals()[c_ind])
+              # del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+              if self.col_btrees[cur_col].insert(cur_row.get_vals()[c_ind], row_res) == 0:
+                del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+                self.col_btrees[cur_col].insert(cur_row.get_vals()[c_ind], row_res)
+              # self.col_btrees[cur_col].update({cur_row.get_vals()[c_ind]: [row_objs[corind]]})
+
+    return
+
 
   def delete(self, where_rows):
+
     res = where_rows
+
     res_key = []
+    new_res = []
+    if isinstance(res,list):
+      new_res = res
+    else:
+      new_res.append(res)
     for ind in range(len(list(self.rows.values()))):
       for i in range(len(res)):
         if res[i] == list(self.rows.values())[ind]:
           res_key.append(ind)
-    new_row = []
     for i in range(len(res_key)):
       del self.rows[res_key[i]]
+    deleted = []
+    for ind in range(len(res)):
+      cur_row = res[ind]
+      for c_ind in range(len(self.columns)):
+        wants = []
+        cur_col = self.columns[c_ind]
+        if (cur_col,cur_row.get_vals()[c_ind]) in deleted:
+          continue
+        else:
+          temps = self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+          deleted.append((cur_col, cur_row.get_vals()[c_ind]))
+          if isinstance(temps, list):
+            for t in temps:
+              if t not in new_res:
+                wants.append(t)
+          else:
+            if temps not in new_res:
+              wants.append(temps)
+
+          ## temps has all entries with name jack
+
+          ## keep the ones we want
+
+          ### lets delete
+          del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
+          if len(wants) != 0:
+              self.col_btrees[cur_col].update({cur_row.get_vals()[c_ind]: wants})
 
   def left_outer_join(self, other_table, op, op_l, op_r):
     outer_tbl_name = self.name +'_outer_'+other_table.name
