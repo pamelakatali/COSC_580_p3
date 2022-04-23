@@ -204,6 +204,7 @@ class Table:
           # print('UPDATED COLUMN')
           ## we want to update this column value
           ## need to fill in both pre_update and update
+          all_updated.append((cur_col, cur_row.get_vals()[c_ind]))
           del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
           if len(wants) != 0:
             ## we want to keep these in the original
