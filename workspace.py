@@ -212,3 +212,22 @@ SELECT name, age, grade, height FROM school_directory LEFT JOIN height_tbl ON na
 
 UPDATE school_directory SET age = 12 WHERE name = 'jane'
 UPDATE school_directory SET age = 12 WHERE gpa = 3.6
+
+
+
+SELECT MIN(age), name FROM school_directory
+SELECT MAX(age), name FROM school_directory
+SELECT * FROM school_directory ORDER BY age
+SELECT * FROM school_directory ORDER BY gpa ASC
+SELECT age, name, grade FROM school_directory ORDER BY age DESC
+SELECT MIN(age), name FROM school_directory ORDER BY age
+SELECT MAX(age), name, grade FROM school_directory ORDER BY grade
+SELECT age, gpa, grade FROM school_directory ORDER BY gpa DESC LIMIT 3
+SELECT SUM(gpa) FROM school_directory
+SELECT count(name) FROM school_directory
+SELECT AVG(grade) FROM school_directory 
+
+
+
+DELETE FROM school_directory WHERE age = 8
+DELETE FROM school_directory WHERE gpa < 3.7
