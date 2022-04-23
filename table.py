@@ -45,8 +45,11 @@ class Table:
       print(c)
       curr_col = self.col_btrees[c]
       for r_lst in curr_col.values():
-        for r in r_lst:
-          print(r)
+        if isinstance(r_lst, list):
+          for r in r_lst:
+            print(r)
+        else:
+          print(r_lst)
     #return ret
 
   def combine_tables(self, other_table):
@@ -281,7 +284,6 @@ class Table:
                 del self.col_btrees[cur_col][cur_row.get_vals()[c_ind]]
                 self.col_btrees[cur_col].insert(cur_row.get_vals()[c_ind], row_res)
               # self.col_btrees[cur_col].update({cur_row.get_vals()[c_ind]: [row_objs[corind]]})
-
     return
 
 
