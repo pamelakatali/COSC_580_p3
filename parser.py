@@ -1,5 +1,6 @@
 import sqlglot
-from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, Column
+from sqlglot.expressions import ColumnDef, Identifier, DataType, From, Star, Table, Values, Literal, Tuple, Where, EQ, \
+	Column, Min, Max, Avg, Sum, Count, Ordered, Group, Order
 from BTrees.OOBTree import OOBTree
 import pickle
 
@@ -37,24 +38,32 @@ def update(res):
 	expr = res.args['expressions']
 	cols = []
 	wheres = res.args['where']
+
 	col_vals = []
 	where_val = None
+	lit_flag = False
+	if expr[0].find(Literal) == None:
+		lit_flag = False
+	else:
+		lit_flag = True
+
 	if wheres != None:
 		where_val = where(wheres)
 	if len(expr) == 1:
-
-		cols = [expr[0].find(Identifier).args['this']]
-		col_vals = [expr[0].find(Literal).args['this']]
+		cols = [expr[0].args['this'].args['this'].args['this']]
+		if lit_flag == False:
+			col_vals = [expr[0].args['expression'].args['this'].args['this']]
+		else:
+			col_vals = [expr[0].find(Literal).args['this']]
 	else:
 		for col in expr:
-			cols.append(col.find(Identifier).args['this'])
-			col_vals.append(col.find(Literal).args['this'])
-	print(table_name)
-	print(cols)
-	print(col_vals)
-	print(where_val)
-	#exit()
+			cols.append(col.args['this'].args['this'].args['this'])
+			if lit_flag == False:
+				col_vals.append(col.args['expression'].args['this'].args['this'])
+			else:
+				col_vals.append(col.find(Literal).args['this'])
 	return table_name, cols, col_vals, where_val
+
 
 #DROP Table
 def drop_table(res):
@@ -88,23 +97,49 @@ def insert(res):
 	return table_name, cols, vals
 
 
-def where(res):
-	where_dict = {}
-	res = res.args['this']
-	where_dict['operation'] = res.key
+def where(res1):
+	where_dict2 = {}
+	where_dicta = {}
+	where_dictb = {}
+	res = res1.args['this']
+	print(res)
+	#exit()
+	print()
+	if res.key == 'and' or res.key == 'or':
+		where_dicta['operand_l'] = res.args['this'].args['this'].args['this'].args['this']
+		where_dicta['operand_r'] = res.args['this'].args['expression'].args['this']
+		where_dicta['operation'] = res.args['this'].key
+		where_dict2['0'] = where_dicta
+		where_dictb['operand_l'] = res.find(Column).args['this'].args['this']
+		where_dictb['operand_r'] = res.find(Literal).args['this']
 
-	where_dict['operand_l'] = res.args['this'].args['this'].args['this']
-	if res.args['expression'].find(Column) == None:
-		where_dict['operand_r'] = res.args['expression'].args['this']
+		where_dictb['operation'] = list(res.args.items())[1][1].key
+		where_dict2['1'] = where_dictb
+		where_dict2['OP'] = res.key
+		print(where_dict2)
+#		exit()
+		return where_dict2
 	else:
-		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
-	return where_dict
+		where_dict = {}
+		where_dict['operation'] = res.key
+
+		where_dict['operand_l'] = res.args['this'].args['this'].args['this']
+		if res.args['expression'].find(Column) == None:
+			where_dict['operand_r'] = res.args['expression'].args['this']
+		else:
+			where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+		return where_dict
 
 def join(res):
 	join_dict = {}
-	
+
 	res = res[0]
-	join_dict['type'] = res.args['kind']
+	print(res.args)
+	if res.args['kind'] != None:
+		join_dict['type'] = res.args['kind'].lower() #inner, cross
+	else:
+		join_dict['type'] = res.args['side'].lower() #left, right
+
 	join_dict['Table'] = res.find(Table).args['this'].args['this']
 
 	res = res.args['on']
@@ -119,52 +154,30 @@ def join(res):
 	#print(join_dict)
 	return join_dict
 
-def groupby(res):
+def orderby(res):
 	col_name = res.find(Identifier).args['this']
-	return col_name
+	key = res.find(Ordered).args['desc']
+	return [col_name, key]
 
-def select(res):
-	res = res.args
-	print(res.keys())
+def groupby(res):
+	group_col = res.find(Identifier).args['this']
+	return group_col
 
-	join_val = None
-	print(res['joins'])
-	if len(res['joins']) > 0:
-		join_val = join(res['joins'])
-	
-	where_val = None
-	if res['where'] != None:
-		where_val = where(res['where'])
-
-	if res['group'] != None:
-		group_col = groupby(res['group'])
+def find_pre(res):
+	pre = None
+	if res.find(Min) != None:
+		pre = 'Min'
+	elif res.find(Max) != None:
+		pre = 'Max'
+	elif res.find(Sum) != None:
+		pre = 'Sum'
+	elif res.find(Avg) != None:
+		pre = 'Avg'
+	elif res.find(Count) != None:
+		pre = 'Count'
 	else:
-		group_col = None
-
-	table_name = res['from'].args['expressions'][0].args['this'].args['this']
-
-	expr = res['expressions']
-	cols = []
-	if len(expr) == 1:
-		expr = expr[0]
-		is_star = expr.find(Star)
-		if is_star is not None:
-			cols = ['star']
-		else:
-			cols = [expr.find(Identifier).args['this']]
-	else:
-
-		for col in expr:
-			cols.append(col.find(Identifier).args['this'])
-
-	# print('Table name:',table_name)
-	# print('Columns:',cols)
-	# print('Where:',where_val)
-	# print('Join:',join_val)
-	# print('Groupby:',group_col)
-
-
-	return table_name, cols, where_val, join_val, group_col
+		pre = None
+	return pre
 
 def delete(res):
 	table_name = res.find(Table).args['this'].args['this']
@@ -174,157 +187,372 @@ def delete(res):
 	where_val = None
 	if wheres != None:
 		where_val = where(wheres)
-
-	# print(table_name)
-	# print(where_val)
-	# exit()
 	return table_name, where_val
 
+def limit(res):
+	return res.args['this'].args['this']
+
+def select(res):
+	res = res.args
+	print(res.keys())
+
+	join_val = None
+	#print(res['joins'])
+	if len(res['joins']) > 0:
+		join_val = join(res['joins'])
+	
+	where_val = None
+	if res['where'] != None:
+		where_val = where(res['where'])
+
+	order_col = None
+	if res['order'] != None:
+		order_col = orderby(res['order'])
+
+	group_col = None
+	if res['group'] != None:
+		group_col = groupby(res['group'])
+
+	limit_val = None 
+	if res['limit'] != None:
+		limit_val = limit(res['limit'])
+		limit_val = int(limit_val)
+
+
+	table_name = res['from'].args['expressions'][0].args['this'].args['this']
+
+	expr = res['expressions']
+	cols = []
+	pres = []
+	if len(expr) == 1:
+		expr = expr[0]
+		is_star = expr.find(Star)
+		if is_star is not None:
+			cols = ['star']
+		else:
+			pres = [find_pre(expr)]
+			cols = [expr.find(Identifier).args['this']]
+	else:
+		for col in expr:
+			pres.append(find_pre(col))
+			cols.append(col.find(Identifier).args['this'])
+
+	print('Table name:', table_name)
+	print('Prefixes:', pres)
+	print('Columns:', cols)
+	print('Where:', where_val)
+	print('Join:', join_val)
+	print('Order_by:', order_col)
+	print('Group_by:', group_col)
+	print('Limit:', limit_val)
+
+	return table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val
+
+def pre_sel(cur_table, pres, cols, col_types, col_inds):
+	pre_inds = []
+	non_pre = []
+	first_pre_ind = None
+	for i in range(len(pres)):
+		if pres[i] != None:
+			pre_inds.append(i)
+		else:
+			non_pre.append(i)
+	res_rows = []
+	new_cols = []
+	new_new_col_types = []
+	temp_rows = []
+	for pre_ind in pre_inds:
+		res_row = None
+		pre = pres[pre_ind]
+		if pre == 'Min':
+			if first_pre_ind == None:
+				first_pre_ind = pre_ind
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.min(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
+			temp_rows.append(cur_table.min(cols[pre_ind]))
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Max':
+			if first_pre_ind == None:
+				first_pre_ind = pre_ind
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.max(cols[pre_ind]).get_vals()[col_inds[pre_ind]]
+			new_new_col_types.append(col_types[pre_ind])
+			temp_rows.append(cur_table.max(cols[pre_ind]))
+		elif pre == 'Sum':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.sum(cols[pre_ind])
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Count':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.count(cols[pre_ind])
+			new_new_col_types.append(col_types[pre_ind])
+		elif pre == 'Avg':
+			new_cols.append(cols[pre_ind])
+			res_row = cur_table.avg(cols[pre_ind])
+			new_new_col_types.append(col_types[pre_ind])
+		res_rows.append(res_row)
+	for non_ind in non_pre:
+		new_cols.insert(non_ind, cols[non_ind])
+		new_new_col_types.append(col_types[non_ind])
+	first_row = None
+	if first_pre_ind != None:
+		first_row = temp_rows[0]
+	row_vals = []
+
+	for i in range(len(new_cols)):
+		if i not in pre_inds:
+			col_name = new_cols[i]
+			cur_ind = cur_table.columns.index(col_name)
+			if first_row != None:
+				row_vals.append(first_row.get_vals()[cur_ind])
+			else:
+				row_vals.append(cur_table.rows[0].get_vals()[cur_ind])
+		else:
+			row_vals.append(res_rows[i])
+	return row_vals, new_cols, new_new_col_types
+
+
 def parse(sql_str, current_db=None):
-	
 	res = sqlglot.parse_one(sql_str)
-	#print(res)
+	print(res)
 	print('--------------------------------------')
-	
+
 	if res.key == 'create':
 		table_name, cols, col_types = create(res)
 		new_tbl = current_db.create_table(table_name, cols, col_types)
-		return 'Tables:'+str(list(current_db.tables.keys()))
+		return 'Tables:' + str(list(current_db.tables.keys()))
 
 	elif res.key == 'insert':
 		table_name, cols, col_vals = insert(res)
-		
+
 		ins_tbl = current_db.tables.get(table_name)
 		ins_tbl.insert(col_vals, cols)
 		ins_tbl.print_table()
-		return 'Inserted row into '+ ins_tbl.name
+		return 'Inserted row into ' + ins_tbl.name
 
 	elif res.key == 'select':
-		table_name, cols, where_val, join_val, group_col = select(res)
-		sel_tbl = current_db.tables.get(table_name) #from
-		#sel_tbl.select(cols, where_val, join_val)
+		table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val = select(res)
+		
+		sel_tbl = current_db.tables.get(table_name)  # from
+		if cols[0] == 'star':
+			cols = sel_tbl.columns
+		# sel_tbl.select(cols, where_val, join_val)
 
-		if where_val != None: #where
-			where_rows = sel_tbl.where(where_val['operation'],where_val['operand_l'],where_val['operand_r'])
-			new_name = sel_tbl.name+'_temp'
+		if join_val != None:
+			other_table = current_db.tables.get(join_val['Table'])
+			sel_tbl = sel_tbl.join(other_table,join_val['operation'],join_val['operand_l'],join_val['operand_r'],join_val['type'])
+			print("preprint table")
+			sel_tbl.print_table()
+			sel_tbl.print_col_b_trees()
+			print("preprint table")
+
+		if where_val != None:  # where
+			where_rows = sel_tbl.where(where_val)
+			new_name = sel_tbl.name + '_temp'
 			new_tbl = CustomTable(new_name, sel_tbl.columns, sel_tbl.col_types)
-			
+
 			new_where_rows = []
 			for r in where_rows:
 				new_where_rows.append(copy.deepcopy(r.values))
 			new_tbl.insert_bulk(new_where_rows, sel_tbl.columns)
 			sel_tbl = new_tbl
 
-		#select - cols
-		new_name = sel_tbl.name+'_temp'
+		# select - cols
+		new_name = sel_tbl.name + '_temp'
 		new_col_types = []
 		col_inds = []
 		for c in cols:
 			ind = sel_tbl.columns.index(c)
-			new_col_types.append(sel_tbl.col_types[ind]) #get [select]column types
-
-			col_inds.append(sel_tbl.columns.index(c)) #get [select]column indices
-
+			new_col_types.append(sel_tbl.col_types[ind])  # get [select]column types
+			col_inds.append(sel_tbl.columns.index(c))  # get [select]column indices
 		new_tbl = CustomTable(new_name, cols, new_col_types)
-		
-		#col_inds = []
-		#for c in cols:
+
+		# col_inds = []
+		# for c in cols:
 		#	col_inds.append(sel_tbl.columns.index(c))
-		
-		print('Tables:',list(current_db.tables.keys()))
-		first_col = cols[0]
-		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
-		for k in first_col_keys:
-			res_rows = sel_tbl.col_btrees[first_col].get(k)
-			out_rows = []
-			print(res_rows)
-			for i in range(len(res_rows)):
-				new_row = []
-				for j in col_inds: #fill in row columns
-					new_row.append(copy.deepcopy(res_rows[i].values[j]))
 
-				out_rows.append(new_row)
+		print('Tables:', list(current_db.tables.keys()))
+		grp_tables = None
 
-			#print('After:',out_rows)
-			new_tbl.insert_bulk(out_rows, new_tbl.columns)
-
+		print('Tables:', list(current_db.tables.keys()))
 		if group_col != None:
-			new_tbl = new_tbl.groupby(group_col)
-		new_tbl.print_table()
-		return 'Select done'
+			grp_tables = sel_tbl.groupby(group_col)
+			cur_table = grp_tables[0]
+			for ind in range(len(grp_tables) - 1):
+				cur_table.insert(grp_tables[0].rows[0].values, grp_tables[0].columns)
+		first_col = cols[0]
+
+		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
+
+		if 'Min' in pres or 'Max' in pres or 'Sum' in pres or 'Count' in pres or 'Avg' in pres:
+			if group_col == None:
+				row_vals, new_cols, new_new_col_types = pre_sel(sel_tbl, pres, cols, new_col_types, col_inds)
+				new_tbl = CustomTable(new_name, new_cols, new_new_col_types)
+				new_tbl.insert(row_vals, new_cols)
+			else:
+				grp_rows = []
+				new_cols = None
+				new_new_col_types = None
+				for tbl in grp_tables:
+					row_vals, new_cols, new_new_col_types = pre_sel(tbl, pres, cols, new_col_types, col_inds)
+					grp_rows.append(row_vals)
+				new_tbl = CustomTable(new_name, new_cols, new_new_col_types)
+				for vals in grp_rows:
+					new_tbl.insert(vals, new_cols)
+		else:
+			print("preprint table")
+			sel_tbl.print_table()
+			sel_tbl.print_col_b_trees()
+			print("preprint table")
+			print(first_col_keys)
+			for k in first_col_keys:
+				res_rows = sel_tbl.col_btrees[first_col].get(k)
+				if not isinstance(res_rows, list):
+					res_rows = [res_rows]
+				out_rows = []
+				print(res_rows)
+				for i in range(len(res_rows)):
+					new_row = []
+					for j in col_inds:  # fill in row columns
+						new_row.append(copy.deepcopy(res_rows[i].values[j]))
+
+					out_rows.append(new_row)
+				print(out_rows)
+
+				# print('After:',out_rows)
+				new_tbl.insert_bulk(out_rows, new_tbl.columns)
+
+		if order_col != None:
+			new_tbl = new_tbl.orderby(order_col[0], order_col[1])
+		
+		print('THIS IS THE NEW TABLE')
+		print(new_tbl.columns)
+		if limit_val != None:
+			new_tbl.print_table(limit=limit_val)
+			return new_tbl.print_table(limit=limit_val)
+		else:
+			new_tbl.print_table()
+		
+		return new_tbl.print_table() #'Select done'
 
 	elif res.key == 'update':
 		table_name, cols, col_vals, where_val = update(res)
 		sel_tbl = current_db.tables.get(table_name)  # from
-		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
-		sel_tbl.update(cols, col_vals, where_val)
+		where_rows = sel_tbl.where(where_val)
+		sel_tbl.update(cols, col_vals, where_rows)
 		return 'Update done'
 	elif res.key == 'drop':
 		drop_table(res)
-
 	elif res.key == 'delete':
 		table_name, where_val = delete(res)
 		sel_tbl = current_db.tables.get(table_name)
-		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		where_rows = sel_tbl.where(where_val)
 		sel_tbl.delete(where_rows)
-		
-
+		return 'deleted'
 
 
 if __name__ == '__main__':
-	#sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
-	#sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
-	#VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
-	#sql = 'SELECT OrderID, CustomerName, OrderDate \
-	#		FROM Orders \
-	#		INNER JOIN Customers ON CustomerID=OrderDate;'
-	#sql = 'CREATE DATABASE mydatabase;'
-	#sql = 'USE mytbl;'
+	# # sql = 'CREATE TABLE trips (level INT, row_date INT)'
+	# sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
+	# # sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
+	# # VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
+	# # sql = 'SELECT OrderID, CustomerName, OrderDate \
+	# #		FROM Orders \
+	# #		INNER JOIN Customers ON CustomerID=OrderDate;'
+	# # sql = 'CREATE DATABASE mydatabase;'
+	# # sql = 'USE mytbl;'
 
-	db = DB('db1')
+	# # parse(sql)
+	# # db = DBMS()
+	# # pickle.dump(, open( 'dbms.pkl', 'wb' ))
 
-	print('___________Create___________')
-	sql = 'CREATE TABLE emp (id INT, salary INT)'
-	parse(sql, db)
+	# # sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
+	# # res = sqlglot.parse_one(sql_str)
+	# # insert(res)
 
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (11, 100)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (22, 200)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (33, 300)'
-	parse(sql, db)
-	print('___________Insert___________')
-	sql = 'INSERT INTO emp (id, salary) VALUES (44, 400)'
-	parse(sql, db)
+	sql_str2 = 'SELECT MIN(age), name FROM school_directory ORDER BY grade DESC'
+	sql_str2 = "SELECT * FROM school_directory LIMIT 10"
+	sql_str2 = "UPDATE school_directory SET age = 12 WHERE name = 'jane'"
+	sql_str2 = "SELECT name, age, grade, height FROM school_directory RIGHT JOIN height_tbl ON name = name"
+	res = sqlglot.parse_one(sql_str2)
+
+	select(res)
+# print(res.args['order'].find(Ordered).args['desc'])
+# print(cols)
 
 
-	print('___________SELECT___________')
-	sql = 'SELECT id, salary from emp'
-	parse(sql, db)
+	# db = DB('db1')
+
+	# print('___________Create___________')
+	# sql = 'CREATE TABLE emp (id INT, salary INT)'
+	# parse(sql, db)
+
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp (id, salary) VALUES (11, 100)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp (id, salary) VALUES (22, 200)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp (id, salary) VALUES (33, 300)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp (id, salary) VALUES (44, 400)'
+	# parse(sql, db)
+
+
+	# print('___________SELECT___________')
+	# sql = 'SELECT id, salary from emp WHERE id > 34 OR salary < 150'
+	# parse(sql, db)
+
+	# print('___________UPDATE___________')
+	# sql = 'UPDATE emp SET id = 34 WHERE salary < 150'
+	# parse(sql, db)
+
+
+	# print('___________SELECT___________')
+	# sql = 'SELECT id, salary from emp'
+	# parse(sql, db)
+
+	# print('___________Create___________')
+	# sql = 'CREATE TABLE emp2 (id INT, phone INT)'
+	# parse(sql, db)
+
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp2 (id, phone) VALUES (11, 1000)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp2 (id, phone) VALUES (22, 2000)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp2 (id, phone) VALUES (33, 3000)'
+	# parse(sql, db)
+	# print('___________Insert___________')
+	# sql = 'INSERT INTO emp2 (id, phone) VALUES (44, 4000)'
+	# parse(sql, db)
+
+
+	# print('___________SELECT___________')
+	# sql = 'SELECT id, salary from emp'
+	# parse(sql, db)
+
+
+	# print('___________SELECT___________')
+	# sql = 'SELECT id, salary, phone from emp INNER JOIN emp2 ON id = id'
+	# parse(sql, db)
 
 	# print('___________UPDATE___________')
 	# sql = 'UPDATE emp SET salary = 999 WHERE id == 2'
 	# parse(sql, db)
 
 
-	print('___________DELETE___________')
-	sql = 'DELETE FROM emp where id > 2'
-	parse(sql, db)
+	# print('___________DELETE___________')
+	# sql = 'DELETE FROM emp where id > 22'
+	# parse(sql, db)
 
 
-	print('___________SELECT___________')
-	sql = 'SELECT id, salary from emp'
-	parse(sql, db)
+	# print('___________SELECT___________')
+	# sql = 'SELECT id, salary from emp'
+	# parse(sql, db)
 
-
-#	pickle.dump(, open( 'dbms.pkl', 'wb' ))
-
-#	sql_str = "INSERT INTO school_directory (name, age, grade) VALUES ('jack', 8, 2)"
-#	res = sqlglot.parse_one(sql_str)
-#	insert(res)
-
-
-
+	# parse('bulk insert 100', db)
