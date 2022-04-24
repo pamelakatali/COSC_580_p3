@@ -95,17 +95,49 @@ def insert(res):
 	return table_name, cols, vals
 
 
-def where(res):
-	where_dict = {}
-	res = res.args['this']
-	where_dict['operation'] = res.key
+# def where(res):
+# 	where_dict = {}
+# 	res = res.args['this']
+# 	where_dict['operation'] = res.key
 
-	where_dict['operand_l'] = res.args['this'].args['this'].args['this']
-	if res.args['expression'].find(Column) == None:
-		where_dict['operand_r'] = res.args['expression'].args['this']
+# 	where_dict['operand_l'] = res.args['this'].args['this'].args['this']
+# 	if res.args['expression'].find(Column) == None:
+# 		where_dict['operand_r'] = res.args['expression'].args['this']
+# 	else:
+# 		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+# 	return where_dict
+def where(res1):
+	where_dict2 = {}
+	where_dicta = {}
+	where_dictb = {}
+	res = res1.args['this']
+	print(res)
+	#exit()
+	print()
+	if res.key == 'and' or res.key == 'or':
+		where_dicta['operand_l'] = res.args['this'].args['this'].args['this'].args['this']
+		where_dicta['operand_r'] = res.args['this'].args['expression'].args['this']
+		where_dicta['operation'] = res.args['this'].key
+		where_dict2['0'] = where_dicta
+		where_dictb['operand_l'] = res.find(Column).args['this'].args['this']
+		where_dictb['operand_r'] = res.find(Literal).args['this']
+
+		where_dictb['operation'] = list(res.args.items())[1][1].key
+		where_dict2['1'] = where_dictb
+		where_dict2['OP'] = res.key
+		print(where_dict2)
+#		exit()
+		return where_dict2
 	else:
-		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
-	return where_dict
+		where_dict = {}
+		where_dict['operation'] = res.key
+
+		where_dict['operand_l'] = res.args['this'].args['this'].args['this']
+		if res.args['expression'].find(Column) == None:
+			where_dict['operand_r'] = res.args['expression'].args['this']
+		else:
+			where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+		return where_dict
 
 
 def join(res):
@@ -382,11 +414,10 @@ def parse(sql_str, current_db=None):
 
 		if join_val != None:
 			other_table = current_db.tables.get(join_val['Table'])
-			sel_tbl = sel_tbl.join(other_table, join_val['operation'], join_val['operand_l'], join_val['operand_r'],
-								   join_val['type'])
+			sel_tbl = sel_tbl.join(other_table, join_val['operation'], join_val['operand_l'], join_val['operand_r'], join_val['type'])
 
 		if where_val != None:  # where
-			where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+			where_rows = sel_tbl.where(where_val)
 			new_name = sel_tbl.name + '_temp'
 			new_tbl = CustomTable(new_name, sel_tbl.columns, sel_tbl.col_types)
 
@@ -466,7 +497,8 @@ def parse(sql_str, current_db=None):
 	elif res.key == 'update':
 		table_name, cols, col_vals, where_val = update(res)
 		sel_tbl = current_db.tables.get(table_name)  # from
-		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		#where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		where_rows = sel_tbl.where(where_val)
 		sel_tbl.update(cols, col_vals, where_rows)
 		return sel_tbl.print_table()
 	elif res.key == 'drop':
@@ -476,7 +508,8 @@ def parse(sql_str, current_db=None):
 	elif res.key == 'delete':
 		table_name, where_val = delete(res)
 		sel_tbl = current_db.tables.get(table_name)
-		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		#where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
+		where_rows = sel_tbl.where(where_val)
 		sel_tbl.delete(where_rows)
 		return 'deleted'
 
