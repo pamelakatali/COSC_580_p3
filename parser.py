@@ -6,10 +6,9 @@ import pickle
 
 from table import Table as CustomTable
 import copy
-from database import DB
 
 
-#CREATE TABLE - if res.key == 'create'
+# CREATE TABLE - if res.key == 'create'
 def create(res):
 	res = res
 	table_name = res.find(Table).args['this'].args['this']
@@ -26,8 +25,8 @@ def create(res):
 		cols.append(col_name)
 		col_types.append(col_type)
 	print('Table name:', table_name)
-	print('Columns:',cols)
-	print('Column types:',col_types)
+	print('Columns:', cols)
+	print('Column types:', col_types)
 
 	return table_name, cols, col_types
 
@@ -38,7 +37,6 @@ def update(res):
 	expr = res.args['expressions']
 	cols = []
 	wheres = res.args['where']
-
 	col_vals = []
 	where_val = None
 	lit_flag = False
@@ -65,18 +63,18 @@ def update(res):
 	return table_name, cols, col_vals, where_val
 
 
-#DROP Table
+# DROP Table
 def drop_table(res):
 	table_name = res.find(Table).args['this'].args['this']
 	print(table_name)
 
 
-#INSERT INTO - add row to table
+# INSERT INTO - add row to table
 def insert(res):
-	#print(res)
+	# print(res)
 	table_name = res.find(Table).args['this'].args['this']
-	#print(res.args.keys())
-	print(res.args['expression'].find(Tuple).args['expressions'])#.args['expressions'])
+	# print(res.args.keys())
+	# print(res.args['expression'].find(Tuple).args['expressions'])  # .args['expressions'])
 
 	cols_gen = res.args['this'].args['expressions']
 	vals_gen = res.args['expression'].find(Tuple).args['expressions']
@@ -86,58 +84,38 @@ def insert(res):
 	for col in cols_gen:
 		cols.append(col.args['this'])
 
-	
 	for val in vals_gen:
 		vals.append(val.args['this'])
 
 	print('Table name:', table_name)
-	print('Columns:',cols)
-	print('Column values:',vals)
+	print('Columns:', cols)
+	print('Column values:', vals)
 
 	return table_name, cols, vals
 
 
-def where(res1):
-	where_dict2 = {}
-	where_dicta = {}
-	where_dictb = {}
-	res = res1.args['this']
-	print(res)
-	#exit()
-	print()
-	if res.key == 'and' or res.key == 'or':
-		where_dicta['operand_l'] = res.args['this'].args['this'].args['this'].args['this']
-		where_dicta['operand_r'] = res.args['this'].args['expression'].args['this']
-		where_dicta['operation'] = res.args['this'].key
-		where_dict2['0'] = where_dicta
-		where_dictb['operand_l'] = res.find(Column).args['this'].args['this']
-		where_dictb['operand_r'] = res.find(Literal).args['this']
+def where(res):
+	where_dict = {}
+	res = res.args['this']
+	where_dict['operation'] = res.key
 
-		where_dictb['operation'] = list(res.args.items())[1][1].key
-		where_dict2['1'] = where_dictb
-		where_dict2['OP'] = res.key
-		print(where_dict2)
-#		exit()
-		return where_dict2
+	where_dict['operand_l'] = res.args['this'].args['this'].args['this']
+	if res.args['expression'].find(Column) == None:
+		where_dict['operand_r'] = res.args['expression'].args['this']
 	else:
-		where_dict['operation'] = res.key
+		where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
+	return where_dict
 
-		where_dict['operand_l'] = res.args['this'].args['this'].args['this']
-		if res.args['expression'].find(Column) == None:
-			where_dict['operand_r'] = res.args['expression'].args['this']
-		else:
-			where_dict['operand_r'] = res.args['expression'].args['this'].args['this']
-		return where_dict
 
 def join(res):
 	join_dict = {}
 
 	res = res[0]
-	print(res.args)
+	# print(res.args)
 	if res.args['kind'] != None:
-		join_dict['type'] = res.args['kind'].lower() #inner, cross
+		join_dict['type'] = res.args['kind'].lower()  # inner, cross
 	else:
-		join_dict['type'] = res.args['side'].lower() #left, right
+		join_dict['type'] = res.args['side'].lower()  # left, right
 
 	join_dict['Table'] = res.find(Table).args['this'].args['this']
 
@@ -149,18 +127,21 @@ def join(res):
 		join_dict['operand_r'] = res.args['expression'].args['this']
 	else:
 		join_dict['operand_r'] = res.args['expression'].args['this'].args['this']
-	
-	#print(join_dict)
+
+	# print(join_dict)
 	return join_dict
+
 
 def orderby(res):
 	col_name = res.find(Identifier).args['this']
 	key = res.find(Ordered).args['desc']
 	return [col_name, key]
 
+
 def groupby(res):
 	group_col = res.find(Identifier).args['this']
 	return group_col
+
 
 def find_pre(res):
 	pre = None
@@ -178,6 +159,7 @@ def find_pre(res):
 		pre = None
 	return pre
 
+
 def delete(res):
 	table_name = res.find(Table).args['this'].args['this']
 	cols = []
@@ -188,18 +170,19 @@ def delete(res):
 		where_val = where(wheres)
 	return table_name, where_val
 
+
 def limit(res):
 	return res.args['this'].args['this']
 
+
 def select(res):
 	res = res.args
-	print(res.keys())
 
 	join_val = None
-	#print(res['joins'])
+	# print(res['joins'])
 	if len(res['joins']) > 0:
 		join_val = join(res['joins'])
-	
+
 	where_val = None
 	if res['where'] != None:
 		where_val = where(res['where'])
@@ -212,11 +195,10 @@ def select(res):
 	if res['group'] != None:
 		group_col = groupby(res['group'])
 
-	limit_val = None 
+	limit_val = None
 	if res['limit'] != None:
 		limit_val = limit(res['limit'])
 		limit_val = int(limit_val)
-
 
 	table_name = res['from'].args['expressions'][0].args['this'].args['this']
 
@@ -246,6 +228,7 @@ def select(res):
 	print('Limit:', limit_val)
 
 	return table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val
+
 
 def pre_sel(cur_table, pres, cols, col_types, col_inds):
 	pre_inds = []
@@ -310,6 +293,7 @@ def pre_sel(cur_table, pres, cols, col_types, col_inds):
 			row_vals.append(res_rows[i])
 	return row_vals, new_cols, new_new_col_types
 
+
 def make_rel_table(rel_name, cur_db):
 	new_tbl = None
 	if rel_name == 'rel_i_i_1000':
@@ -357,12 +341,16 @@ def make_rel_table(rel_name, cur_db):
 	return new_tbl
 
 pre_loads = ['rel_i_i_1000','rel_i_1_1000','rel_i_i_10000','rel_i_1_10000','rel_i_i_100000','rel_i_1_100000']
+
 def parse(sql_str, current_db=None):
 
 	if sql_str in pre_loads:
+		print('pre_load')
 		new_tbl = make_rel_table(sql_str, current_db)
 		return 'Tables: ' + str(list(current_db.tables.keys()))
-	print(res)
+
+	res = sqlglot.parse_one(sql_str)
+	# print(res)
 	print('--------------------------------------')
 
 	if res.key == 'create':
@@ -380,7 +368,7 @@ def parse(sql_str, current_db=None):
 
 	elif res.key == 'select':
 		table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val = select(res)
-		
+
 		sel_tbl = current_db.tables.get(table_name)  # from
 		if cols[0] == 'star':
 			cols = sel_tbl.columns
@@ -388,14 +376,11 @@ def parse(sql_str, current_db=None):
 
 		if join_val != None:
 			other_table = current_db.tables.get(join_val['Table'])
-			sel_tbl = sel_tbl.join(other_table,join_val['operation'],join_val['operand_l'],join_val['operand_r'],join_val['type'])
-			print("preprint table")
-			sel_tbl.print_table()
-			sel_tbl.print_col_b_trees()
-			print("preprint table")
+			sel_tbl = sel_tbl.join(other_table, join_val['operation'], join_val['operand_l'], join_val['operand_r'],
+								   join_val['type'])
 
 		if where_val != None:  # where
-			where_rows = sel_tbl.where(where_val)
+			where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
 			new_name = sel_tbl.name + '_temp'
 			new_tbl = CustomTable(new_name, sel_tbl.columns, sel_tbl.col_types)
 
@@ -421,8 +406,6 @@ def parse(sql_str, current_db=None):
 
 		print('Tables:', list(current_db.tables.keys()))
 		grp_tables = None
-
-		print('Tables:', list(current_db.tables.keys()))
 		if group_col != None:
 			grp_tables = sel_tbl.groupby(group_col)
 			cur_table = grp_tables[0]
@@ -448,31 +431,23 @@ def parse(sql_str, current_db=None):
 				for vals in grp_rows:
 					new_tbl.insert(vals, new_cols)
 		else:
-			print("preprint table")
-			sel_tbl.print_table()
-			sel_tbl.print_col_b_trees()
-			print("preprint table")
-			print(first_col_keys)
 			for k in first_col_keys:
 				res_rows = sel_tbl.col_btrees[first_col].get(k)
 				if not isinstance(res_rows, list):
 					res_rows = [res_rows]
 				out_rows = []
-				print(res_rows)
 				for i in range(len(res_rows)):
 					new_row = []
 					for j in col_inds:  # fill in row columns
 						new_row.append(copy.deepcopy(res_rows[i].values[j]))
 
 					out_rows.append(new_row)
-				print(out_rows)
-
 				# print('After:',out_rows)
 				new_tbl.insert_bulk(out_rows, new_tbl.columns)
 
 		if order_col != None:
 			new_tbl = new_tbl.orderby(order_col[0], order_col[1])
-		
+
 		print('THIS IS THE NEW TABLE')
 		print(new_tbl.columns)
 		if limit_val != None:
@@ -480,28 +455,27 @@ def parse(sql_str, current_db=None):
 			return new_tbl.print_table(limit=limit_val)
 		else:
 			new_tbl.print_table()
-		
-		return new_tbl.print_table() #'Select done'
+
+		return new_tbl.print_table()  # 'Select done'
 
 	elif res.key == 'update':
 		table_name, cols, col_vals, where_val = update(res)
 		sel_tbl = current_db.tables.get(table_name)  # from
-		where_rows = sel_tbl.where(where_val)
+		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
 		sel_tbl.update(cols, col_vals, where_rows)
-		return 'Update done'
+		return sel_tbl.print_table()
 	elif res.key == 'drop':
 		drop_table(res)
 	elif res.key == 'delete':
 		table_name, where_val = delete(res)
 		sel_tbl = current_db.tables.get(table_name)
-		where_rows = sel_tbl.where(where_val)
+		where_rows = sel_tbl.where(where_val['operation'], where_val['operand_l'], where_val['operand_r'])
 		sel_tbl.delete(where_rows)
 		return 'deleted'
 
 
 if __name__ == '__main__':
 	# sql = 'CREATE TABLE trips (level INT, row_date INT)'
-	
 	sql = 'SELECT name,trips FROM trips WHERE trips = 2.1;'
 	# sql = "INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country) \
 	# VALUES ('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway');"
