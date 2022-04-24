@@ -84,33 +84,86 @@ class Table:
         output.append(row_obj)
         self.col_btrees[curr_col].update({new_row[i]:output})
 
-  def where(self, operator, op_l, op_r):
+  def where(self, where_val):
 
-    ind = self.columns.index(op_l)
-    op_r = convert_datatype(op_r, self.col_types[ind])
+    if 'OP' in where_val.keys():
+      print('hi')
+      new_res = [[], []] 
 
-    res = None
-    if operator == 'eq':
-      res = self.col_btrees[op_l].get(op_r)
-    elif operator == 'gt':
-      res = self.col_btrees[op_l].values(min=op_r,excludemin=True)
-    elif operator == 'lt':
-      res = self.col_btrees[op_l].values(max=op_r,excludemax=True)
-    elif operator == 'gte':
-      res = self.col_btrees[op_l].values(min=op_r,excludemin=False)
-    elif operator == 'lte':
-      res = self.col_btrees[op_l].values(max=op_r,excludemax=False)
-    
-    #print('WHERE') 
-    new_res = [] 
-    for r in res:
-      if isinstance(r, list):
-        for val in r:
-          new_res.append(val)
+      for i in range(2):
+        operator = where_val[str(i)]['operation']
+        op_l = where_val[str(i)]['operand_l']
+        op_r = where_val[str(i)]['operand_r']
+        #print(operator)
+        ind = self.columns.index(op_l)
+        op_r = convert_datatype(op_r, self.col_types[ind])
+
+        res = None
+        if operator == 'eq':
+          res = self.col_btrees[op_l].get(op_r)
+        elif operator == 'gt':
+          res = self.col_btrees[op_l].values(min=op_r,excludemin=True)
+        elif operator == 'lt':
+          res = self.col_btrees[op_l].values(max=op_r,excludemax=True)
+        elif operator == 'gte':
+          res = self.col_btrees[op_l].values(min=op_r,excludemin=False)
+        elif operator == 'lte':
+          res = self.col_btrees[op_l].values(max=op_r,excludemax=False)
+        
+        #print('WHERE') 
+        for r in res:
+          if isinstance(r, list):
+            for val in r:
+              new_res[i].append(val)
+          else:
+            new_res[i].append(r)
+
+        print(new_res)
+      if where_val['OP'] == 'and':
+        # print( [value for value in new_res[0] if value in new_res[1]])
+        # exit()
+        return [value for value in new_res[0] if value in new_res[1]]
+        
+      elif where_val['OP'] == 'or':
+        # print( new_res[0] + new_res[1])
+        # exit()
+        return list( set(new_res[0]) | set(new_res[1]))
       else:
-        new_res.append(r)
-    #print(r)
-    return new_res
+        print('error in where')
+        exit()
+      #where_val['']
+      #return new_res
+    else:
+      operator = where_val['operation']
+      op_l = where_val['operand_l']
+      op_r = where_val['operand_r']
+
+      where_val['']
+      ind = self.columns.index(op_l)
+      op_r = convert_datatype(op_r, self.col_types[ind])
+
+      res = None
+      if operator == 'eq':
+        res = self.col_btrees[op_l].get(op_r)
+      elif operator == 'gt':
+        res = self.col_btrees[op_l].values(min=op_r,excludemin=True)
+      elif operator == 'lt':
+        res = self.col_btrees[op_l].values(max=op_r,excludemax=True)
+      elif operator == 'gte':
+        res = self.col_btrees[op_l].values(min=op_r,excludemin=False)
+      elif operator == 'lte':
+        res = self.col_btrees[op_l].values(max=op_r,excludemax=False)
+      
+      #print('WHERE') 
+      new_res = [] 
+      for r in res:
+        if isinstance(r, list):
+          for val in r:
+            new_res.append(val)
+        else:
+          new_res.append(r)
+      #print(r)
+      return new_res
 
   def update(self, cols, new_vals, where_rows):
     #
@@ -382,6 +435,8 @@ class Table:
       #op_l = join_tbl_cols[col_l]
       join_tbl_cols[len(self.columns)+col_r] = self.columns[col_r] +'_right'
       #op_r = join_tbl_cols[col_l]
+      #print(join_tbl_cols)
+      #exit()
 
     join_tbl_col_types = self.col_types +other_table.col_types
     join_tbl = Table(join_tbl_name,join_tbl_cols,join_tbl_col_types)
@@ -391,9 +446,12 @@ class Table:
     #left outer join
     left_keys = list(self.col_btrees[op_l].keys())
 
+
     for k in left_keys:
       left_rows = self.col_btrees[op_l].get(k)
-
+      # for ob in left_rows:
+      #   print(ob.values)
+      # exit()
       right_rows = other_table.col_btrees[op_r].get(k) #lst
 
 

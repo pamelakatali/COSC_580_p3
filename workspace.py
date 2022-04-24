@@ -231,3 +231,6 @@ SELECT AVG(grade) FROM school_directory
 
 DELETE FROM school_directory WHERE age = 8
 DELETE FROM school_directory WHERE gpa < 3.7
+
+SELECT * FROM school_directory WHERE age=8 and gpa<3.4
+SELECT * FROM school_directory Where age=8 or gpa<=3.5
