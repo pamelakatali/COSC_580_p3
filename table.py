@@ -648,7 +648,7 @@ class Table:
             rows.append(self.col_btrees[col].get(k))
         grp_tables = []
         for row in range(len(rows)):
-            temp_table = Table(col + ' ' + keys[row], self.columns, self.col_types)
+            temp_table = Table(col + ' ' + str(keys[row]), self.columns, self.col_types)
             for j in rows[row]:
                 temp_table.insert(j.values, self.columns)
             grp_tables.append(temp_table)
