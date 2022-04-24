@@ -40,6 +40,47 @@ class Table:
       count += 1
     return ret
 
+  def rel_1(self):
+    rel_i_i_1000 = []
+    for i in range(1, 1001):
+      tpl = [i, i]
+      rel_i_i_1000.append(tpl)
+    return rel_i_i_1000
+
+  def rel_2(self):
+    rel_i_1_1000 = []
+    for i in range(1, 1001):
+      tpl = [i, 1]
+      rel_i_1_1000.append(tpl)
+    return rel_i_1_1000
+
+  def rel_3(self):
+    rel_i_i_10000 = []
+    for i in range(1, 10001):
+      tpl = [i, i]
+      rel_i_i_10000.append(tpl)
+    return rel_i_i_10000
+
+  def rel_4(self):
+    rel_i_1_10000 = []
+    for i in range(1, 10001):
+      tpl = [i, 1]
+      rel_i_1_10000.append(tpl)
+    return rel_i_1_10000
+
+  def rel_5(self):
+    rel_i_i_100000 = []
+    for i in range(1, 100001):
+      tpl = [i, i]
+      rel_i_i_100000.append(tpl)
+    return rel_i_i_100000
+
+  def rel_6(self):
+    rel_i_1_100000 = []
+    for i in range(1, 100001):
+      tpl = [i, 1]
+      rel_i_1_100000.append(tpl)
+    return rel_i_1_100000
   def print_col_b_trees(self):
     for c in self.columns:
       print(c)

@@ -310,9 +310,58 @@ def pre_sel(cur_table, pres, cols, col_types, col_inds):
 			row_vals.append(res_rows[i])
 	return row_vals, new_cols, new_new_col_types
 
+def make_rel_table(rel_name, cur_db):
+	new_tbl = None
+	if rel_name == 'rel_i_i_1000':
+		table_name = 'rel_i_i_1000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_i_1000_rows = new_tbl.rel_1()
+		new_tbl.insert_bulk(rel_i_i_1000_rows, columns)
+	elif rel_name == 'rel_i_1_1000':
+		table_name = 'rel_i_1_1000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_1_1000_rows = new_tbl.rel_2()
+		new_tbl.insert_bulk(rel_i_1_1000_rows, columns)
+	elif rel_name == 'rel_i_i_10000':
+		table_name = 'rel_i_i_10000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_i_10000_rows = new_tbl.rel_3()
+		new_tbl.insert_bulk(rel_i_i_10000_rows, columns)
+	elif rel_name == 'rel_i_1_10000':
+		table_name = 'rel_i_1_10000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_1_10000_rows = new_tbl.rel_4()
+		new_tbl.insert_bulk(rel_i_1_10000_rows, columns)
+	elif rel_name == 'rel_i_i_100000':
+		table_name = 'rel_i_i_100000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_i_100000_rows = new_tbl.rel_3()
+		new_tbl.insert_bulk(rel_i_i_100000_rows, columns)
+	elif rel_name == 'rel_i_1_100000':
+		table_name = 'rel_i_1_100000'
+		columns = ['col1', 'col2']
+		col_types = [DataType.Type.INT, DataType.Type.INT]
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_1_100000_rows = new_tbl.rel_4()
+		new_tbl.insert_bulk(rel_i_1_100000_rows, columns)
+	return new_tbl
 
+pre_loads = ['rel_i_i_1000','rel_i_1_1000','rel_i_i_10000','rel_i_1_10000','rel_i_i_100000','rel_i_1_100000']
 def parse(sql_str, current_db=None):
-	res = sqlglot.parse_one(sql_str)
+
+	if sql_str in pre_loads:
+		new_tbl = make_rel_table(sql_str, current_db)
+		return 'Tables: ' + str(list(current_db.tables.keys()))
 	print(res)
 	print('--------------------------------------')
 
