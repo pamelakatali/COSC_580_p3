@@ -71,6 +71,20 @@ class Table:
             rel_i_1_100000.append(tpl)
         return rel_i_1_100000
 
+    def rel_x(self):
+        reli_i_10 = []
+        for i in range(1, 11):
+            tpl = [i, i]
+            reli_i_10.append(tpl)
+        return reli_i_10
+
+    def rel_y(self):
+        reli_1_10 = []
+        for i in range(1, 11):
+            tpl = [i, 1]
+            reli_1_10.append(tpl)
+        return reli_1_10
+
     def print_table(self, limit=10):
         ret = ''
         count = 0

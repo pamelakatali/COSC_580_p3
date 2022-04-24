@@ -296,51 +296,58 @@ def pre_sel(cur_table, pres, cols, col_types, col_inds):
 
 def make_rel_table(rel_name, cur_db):
 	new_tbl = None
+	col_types = [DataType.Type.INT, DataType.Type.INT]
 	if rel_name == 'rel_i_i_1000':
 		table_name = 'rel_i_i_1000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['ii10001', 'ii10002']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_i_1000_rows = new_tbl.rel_1()
 		new_tbl.insert_bulk(rel_i_i_1000_rows, columns)
 	elif rel_name == 'rel_i_1_1000':
 		table_name = 'rel_i_1_1000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['i110001', 'i110002']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_1_1000_rows = new_tbl.rel_2()
 		new_tbl.insert_bulk(rel_i_1_1000_rows, columns)
 	elif rel_name == 'rel_i_i_10000':
 		table_name = 'rel_i_i_10000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['ii100001', 'ii100001']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_i_10000_rows = new_tbl.rel_3()
 		new_tbl.insert_bulk(rel_i_i_10000_rows, columns)
 	elif rel_name == 'rel_i_1_10000':
 		table_name = 'rel_i_1_10000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['i1100001', 'i1100001']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_1_10000_rows = new_tbl.rel_4()
 		new_tbl.insert_bulk(rel_i_1_10000_rows, columns)
 	elif rel_name == 'rel_i_i_100000':
 		table_name = 'rel_i_i_100000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['ii1000001', 'ii1000002']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_i_100000_rows = new_tbl.rel_3()
 		new_tbl.insert_bulk(rel_i_i_100000_rows, columns)
 	elif rel_name == 'rel_i_1_100000':
 		table_name = 'rel_i_1_100000'
-		columns = ['col1', 'col2']
-		col_types = [DataType.Type.INT, DataType.Type.INT]
+		columns = ['i11000001', 'i11000002']
 		new_tbl = cur_db.create_table(table_name, columns, col_types)
 		rel_i_1_100000_rows = new_tbl.rel_4()
 		new_tbl.insert_bulk(rel_i_1_100000_rows, columns)
+	elif rel_name == 'rel_i_i_10':
+		table_name = 'rel_i_i_10'
+		columns = ['ii101','ii102']
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_i_10_rows = new_tbl.rel_x()
+		new_tbl.insert_bulk(rel_i_i_10_rows, columns)
+	elif rel_name == 'rel_i_1_10':
+		table_name = 'rel_i_1_10'
+		columns = ['i1101', 'i1102']
+		new_tbl = cur_db.create_table(table_name, columns, col_types)
+		rel_i_1_10_rows = new_tbl.rel_y()
+		new_tbl.insert_bulk(rel_i_1_10_rows, columns)
 	return new_tbl
 
-pre_loads = ['rel_i_i_1000','rel_i_1_1000','rel_i_i_10000','rel_i_1_10000','rel_i_i_100000','rel_i_1_100000']
+pre_loads = ['rel_i_i_10', 'rel_i_1_10','rel_i_i_1000','rel_i_1_1000','rel_i_i_10000','rel_i_1_10000','rel_i_i_100000','rel_i_1_100000']
 
 def parse(sql_str, current_db=None):
 
@@ -370,8 +377,7 @@ def parse(sql_str, current_db=None):
 		table_name, pres, cols, where_val, join_val, order_col, group_col, limit_val = select(res)
 
 		sel_tbl = current_db.tables.get(table_name)  # from
-		if cols[0] == 'star':
-			cols = sel_tbl.columns
+
 		# sel_tbl.select(cols, where_val, join_val)
 
 		if join_val != None:
@@ -393,6 +399,8 @@ def parse(sql_str, current_db=None):
 		# select - cols
 		new_name = sel_tbl.name + '_temp'
 		new_col_types = []
+		if cols[0] == 'star':
+			cols = sel_tbl.columns
 		col_inds = []
 		for c in cols:
 			ind = sel_tbl.columns.index(c)
