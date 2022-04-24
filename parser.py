@@ -66,7 +66,8 @@ def update(res):
 # DROP Table
 def drop_table(res):
 	table_name = res.find(Table).args['this'].args['this']
-	print(table_name)
+	print('Delete table: ', table_name)
+	return (table_name)
 
 
 # INSERT INTO - add row to table
@@ -352,7 +353,6 @@ pre_loads = ['rel_i_i_10', 'rel_i_1_10','rel_i_i_1000','rel_i_1_1000','rel_i_i_1
 def parse(sql_str, current_db=None):
 
 	if sql_str in pre_loads:
-		print('pre_load')
 		new_tbl = make_rel_table(sql_str, current_db)
 		return 'Tables: ' + str(list(current_db.tables.keys()))
 
@@ -473,7 +473,9 @@ def parse(sql_str, current_db=None):
 		sel_tbl.update(cols, col_vals, where_rows)
 		return sel_tbl.print_table()
 	elif res.key == 'drop':
-		drop_table(res)
+		table_name = drop_table(res)
+		current_db.drop_table(table_name)
+		return table_name + ' dropped'
 	elif res.key == 'delete':
 		table_name, where_val = delete(res)
 		sel_tbl = current_db.tables.get(table_name)
