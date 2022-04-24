@@ -85,8 +85,10 @@ class Table:
             reli_1_10.append(tpl)
         return reli_1_10
 
-    def print_table(self, limit=10):
+    def print_table(self, limit=-1):
         ret = ''
+        if limit == -1:
+            limit = len(self.rows)
         count = 0
         for r in self.rows.values():
             if count < limit:
