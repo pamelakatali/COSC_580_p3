@@ -416,11 +416,9 @@ def parse(sql_str, current_db=None):
 		grp_tables = None
 		if group_col != None:
 			grp_tables = sel_tbl.groupby(group_col)
-			cur_table = grp_tables[0]
-			for ind in range(len(grp_tables) - 1):
-				cur_table.insert(grp_tables[0].rows[0].values, grp_tables[0].columns)
-		first_col = cols[0]
 
+		first_col = cols[0]
+		
 		first_col_keys = list(sel_tbl.col_btrees[first_col].keys())
 
 		if 'Min' in pres or 'Max' in pres or 'Sum' in pres or 'Count' in pres or 'Avg' in pres:
@@ -448,7 +446,6 @@ def parse(sql_str, current_db=None):
 					new_row = []
 					for j in col_inds:  # fill in row columns
 						new_row.append(copy.deepcopy(res_rows[i].values[j]))
-
 					out_rows.append(new_row)
 				# print('After:',out_rows)
 				new_tbl.insert_bulk(out_rows, new_tbl.columns)
